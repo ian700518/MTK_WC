@@ -2,6 +2,39 @@
 
 #define DBG_EN 1
 
+/*将字符串s中出现的字符c删除*/
+void squeeze(char s[],int c)
+{
+    int i,j;
+
+    for (i = 0, j = 0; s[i] != '\0'; i++)
+    {
+        if (s[i] != c)
+        {
+            s[j++] = s[i];
+        }
+    }
+    s[j] = '\0';    //这一条语句千万不能忘记，字符串的结束标记
+}
+
+
+/*check iOS system MAC address*/
+void checkiOSMac(unsigned char *src)
+{
+    int length;
+    int i,j;
+
+    length = strlen(src);
+    for(i=12,j=0;i>0;i--,j++)
+    {
+        src[j] = src[length - i];
+        if(((j%2) == 0) && (j != 0))
+          src[++j] = ':';
+    }
+    src[j] = '\0';
+}
+
+
 void send_command(unsigned char *command, unsigned char *resulte, int resulte_length)
 {
     FILE *fp;
