@@ -6,13 +6,7 @@ int main()
     int fd, recctmain = 0, BTIdx = 0;
     unsigned char *rxbuf;
     unsigned char *filebuf;
-    //unsigned char *commandbuf;
-    //unsigned char buf2[64];
     int reg;
-    //int i, reg, data_length;
-    //unsigned char *jpgbuf;
-    //char prebuf[8] = "StartAA";
-    //unsigned char suffixbuf[5] = "AAEnd";
     time_t Current_sec;
     time_t Present_sec;
     unsigned char BTCheckFlag = 0;
@@ -77,7 +71,7 @@ int main()
     printf("Dabai process starting~~~!!!\n");
     while(1)
     {
-        BTIdx = BTTransferUart(fd, "DaBai/RxCommTmp.txt", rxbuf);
+        BTIdx = BTTransferUart(fd, "DaBai/RxCommTmp.txt", rxbuf, filebuf);
         switch(BTIdx)
         {
             case 1:     // Set Device Network Information

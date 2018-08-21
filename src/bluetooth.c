@@ -105,8 +105,8 @@ int GetBTModuleInof(unsigned char *path, unsigned char *rxbuf, unsigned char *fi
     unsigned int offset = 0;
     FILE *fp;
 
-    memset(rxbuf, 0, strlen(rxbuf));
-    memset(filebuf, 0, strlen(filebuf));
+    memset(rxbuf, 0, UARTRXSIZE);
+    memset(filebuf, 0, FILESIZE);
     fd = uart_initial(DEV_UART, BAUDRATE,  DATABIT, PARITY, STOPBIT);
     if(fd < 0)
         return -1;
@@ -171,8 +171,8 @@ int GetBTModuleName(unsigned char *path, unsigned char *rxbuf, unsigned char *fi
     unsigned int offset = 0;
     FILE *fp;
 
-    memset(rxbuf, 0, strlen(rxbuf));
-    memset(filebuf, 0, strlen(filebuf));
+    memset(rxbuf, 0, UARTRXSIZE);
+    memset(filebuf, 0, FILESIZE);
     fd = uart_initial(DEV_UART, BAUDRATE,  DATABIT, PARITY, STOPBIT);
     if(fd < 0)
         return -1;
@@ -240,7 +240,7 @@ int BTModuleLeaveConfigMode(unsigned char *rxbuf)
     int recct = 0, fd;
     unsigned char BTMBuf[6] = {0xAA, 0x00, 0x02, 0x52, 0x00};
 
-    memset(rxbuf, 0, strlen(rxbuf));
+    memset(rxbuf, 0, UARTRXSIZE);
     fd = uart_initial(DEV_UART, BAUDRATE,  DATABIT, PARITY, STOPBIT);
     if(fd < 0)
         return -1;
@@ -272,14 +272,15 @@ int BTModuleLeaveConfigMode(unsigned char *rxbuf)
     return 0;
 }
 
-int BTTransferUart(int fd, unsigned char *path, unsigned char *rxbuf)
+int BTTransferUart(int fd, unsigned char *path, unsigned char *rxbuf, unsigned char *filebuf)
 {
     int recct = 0, idx = 0, i = 0;;
     unsigned char checkstr[16];
-    FILE *fp;
+    FILE *fp, *fpimg;
     unsigned char *imgbuf;
 
-    memset(rxbuf, 0, strlen(rxbuf));
+    memset(rxbuf, 0, UARTRXSIZE);
+    memset(filebuf, 0, FILESIZE);
     recct = uart_read(fd, rxbuf);
     if(recct > 0)
     {
@@ -291,7 +292,7 @@ int BTTransferUart(int fd, unsigned char *path, unsigned char *rxbuf)
         if(fp != NULL)
         {
             fwrite(rxbuf, 1, strlen(rxbuf), fp);
-            fwrite("\0", 1, 1, fp);
+            fwrite("\n\0", 1, 1, fp);
             fclose(fp);
         }
         // check index
@@ -314,25 +315,37 @@ int BTTransferUart(int fd, unsigned char *path, unsigned char *rxbuf)
             printf("BTTransferUart rxbuf : %s\n", rxbuf);
             printf("idx : %d\n", idx);
         #endif
-        rxbuf = strstr(rxbuf, "\"type\":\"");
-        if(rxbuf != NULL)
+        fp = fopen(path, "r");
+        if(fp != NULL)
         {
-            ReadJsonVal(rxbuf + strlen("\"type\":\""), checkstr);
-            imgbuf = (unsigned char *)calloc(FILESIZE, sizeof(unsigned char));
-            fp = fopen(SENDTOPHONEPATH, "r");       // feedback to Device
-            if(fp != NULL)
+            printf("Open RxCommTmp file\n");
+            while(!feof(fp))
             {
-                while(!feof(fp))
+                //fgets(filebuf, UARTRXSIZE, fp);
+                fread(filebuf, 1, FILESIZE, fp);
+                filebuf = strstr(filebuf, "\"type\":\"");
+                if(filebuf != NULL)
                 {
-                    uart_write(fd, imgbuf, fread(imgbuf, 1, FILESIZE, fp));
+                    ReadJsonVal(filebuf + strlen("\"type\":\""), checkstr);
+                    imgbuf = (unsigned char *)calloc(FILESIZE, sizeof(unsigned char));
+                    fpimg = fopen(SENDTOPHONEPATH, "r");       // feedback to Device
+                    if(fpimg != NULL)
+                    {
+                        while(!feof(fpimg))
+                        {
+                            uart_write(fd, imgbuf, fread(imgbuf, 1, FILESIZE, fpimg));
+                        }
+                        if(strcmp(checkstr, "iOS") == 0)
+                        {
+                            uart_write(fd, IOSSUFFIX, strlen(IOSSUFFIX));
+                        }
+                        fclose(fpimg);
+                        free(imgbuf);
+                        break;
+                    }
                 }
-                if(strcmp(checkstr, "iOS") == 0)
-                {
-                    uart_write(fd, IOSSUFFIX, strlen(IOSSUFFIX));
-                }
-                fclose(fp);
-                free(imgbuf);
             }
+            fclose(fp);
         }
         return idx;
     }

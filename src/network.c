@@ -9,7 +9,7 @@ int GetDeviceMACAddr(unsigned char *path, unsigned char *filebuf)
     unsigned char macaddr[17];
     FILE *fp;
 
-    memset(filebuf, 0, strlen(filebuf));
+    memset(filebuf, 0, FILESIZE);
     fp = fopen("/etc/config/network", "r");
     if(fp != NULL)
     {

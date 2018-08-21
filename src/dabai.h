@@ -74,7 +74,7 @@ struct ClientDev
 {
     unsigned int DevIdx;
     char DevType[16];
-    char DevMac[18];
+    char DevMac[19];
     char DevAccount[64];
     char DevUserId[64];
 		time_t StartTime;
@@ -101,7 +101,7 @@ enum
     Err_Mac,
 };
 
-struct ClientDev *ChargeDevice[CHGDEVMAX];
+struct ClientDev ChargeDevice[CHGDEVMAX];
 char StaSsid[128];
 char StaPassword[64];
 char StaEncryption[16];
@@ -132,7 +132,7 @@ int SetBMModuleMode(int OPmode);
 int GetBTModuleInof(unsigned char *path, unsigned char *rxbuf, unsigned char *filebuf);
 int GetBTModuleName(unsigned char *path, unsigned char *rxbuf, unsigned char *filebuf);
 int BTModuleLeaveConfigMode(unsigned char *rxbuf);
-int BTTransferUart(int fd, unsigned char *path, unsigned char *rxbuf);
+int BTTransferUart(int fd, unsigned char *path, unsigned char *rxbuf, unsigned char *filebuf);
 
 // define at subporc.c
 void send_command(unsigned char *command, unsigned char *resulte, int resulte_length);

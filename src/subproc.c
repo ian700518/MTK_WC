@@ -19,19 +19,35 @@ void squeeze(char s[],int c)
 
 
 /*check iOS system MAC address*/
-void checkiOSMac(unsigned char *src)
+void checkiOSMac(unsigned char *src, unsigned char *dest)
 {
     int length;
     int i,j;
+    unsigned char *buf;
 
+    buf = strrchr(src, '-');
+    printf("buf is %s\n", buf);
+    for(i=0,j=0;i<12;i++,j++)
+    {
+        dest[j] = buf[i+1];
+        if(i%2 == 1)
+        {
+            j++;
+            if(i<11)
+              dest[j] = ':';
+        }
+    }
+    dest[j] = '\0';
+/*
     length = strlen(src);
     for(i=12,j=0;i>0;i--,j++)
     {
         src[j] = src[length - i];
         if(((j%2) == 0) && (j != 0))
-          src[++j] = ':';
+          src[j++] = ':';
     }
     src[j] = '\0';
+    */
 }
 
 
@@ -70,16 +86,18 @@ int RXCmdtoCHGDev(unsigned char *path, unsigned char *string, unsigned char *fil
     FILE *fp;
     unsigned int length;
 
-    memset(filebuf, 0, strlen(filebuf));
+    memset(filebuf, 0, FILESIZE);
     fp = fopen(path, "r");
     if(fp != NULL)
     {
         while(!feof(fp))
         {
-            fgets(filebuf, FILESIZE, fp);
+            //fgets(filebuf, FILESIZE, fp);
+            fread(filebuf, 1, FILESIZE, fp);
             filebuf = strstr(filebuf, string);
             length = strlen(string);
             #if DBG_EN
+                printf("string is %s\n", string);
                 printf("filebuf is %s\n", filebuf);
             #endif
             if(filebuf != NULL)
@@ -109,23 +127,23 @@ int WriteChgList(unsigned char *path, unsigned char *filebuf, struct ClientDev *
         for(i=0;i<ChgDevCt;i++)
         {
             fputs(" {\n", fp);
-            sprintf(filebuf, "    \"index\":\"%d\",\n", CDV->DevIdx);
+            sprintf(filebuf, "    \"index\":\"%d\",\n", (CDV+i)->DevIdx);
             fputs(filebuf, fp);
-            sprintf(filebuf, "    \"type\":\"%s\",\n", CDV->DevType);
+            sprintf(filebuf, "    \"type\":\"%s\",\n", (CDV+i)->DevType);
             fputs(filebuf, fp);
-            sprintf(filebuf, "    \"userId\":\"%s\",\n", CDV->DevUserId);
+            sprintf(filebuf, "    \"userId\":\"%s\",\n", (CDV+i)->DevUserId);
             fputs(filebuf, fp);
-            sprintf(filebuf, "    \"account\":\"%s\",\n", CDV->DevAccount);
+            sprintf(filebuf, "    \"account\":\"%s\",\n", (CDV+i)->DevAccount);
             fputs(filebuf, fp);
-            sprintf(filebuf, "    \"mac\":\"%s\",\n", CDV->DevMac);
+            sprintf(filebuf, "    \"mac\":\"%s\",\n", (CDV+i)->DevMac);
             fputs(filebuf, fp);
-            sprintf(filebuf, "    \"StartTime\":\"%d\",\n", CDV->StartTime);
+            sprintf(filebuf, "    \"StartTime\":\"%d\",\n", (CDV+i)->StartTime);
             fputs(filebuf, fp);
-            sprintf(filebuf, "    \"CurrentTime\":\"%d\",\n", CDV->CurrentTime);
+            sprintf(filebuf, "    \"CurrentTime\":\"%d\",\n", (CDV+i)->CurrentTime);
             fputs(filebuf, fp);
-            sprintf(filebuf, "    \"FormatSTime\":\"%s\",\n", CDV->DevFormatSTime);
+            sprintf(filebuf, "    \"FormatSTime\":\"%s\",\n", (CDV+i)->DevFormatSTime);
             fputs(filebuf, fp);
-            sprintf(filebuf, "    \"FormatCTime\":\"%s\",\n", CDV->DevFormatCTime);
+            sprintf(filebuf, "    \"FormatCTime\":\"%s\",\n", (CDV+i)->DevFormatCTime);
             fputs(filebuf, fp);
             sprintf(filebuf, "    \"RemainT_Hr\":\"\",\n");
             fputs(filebuf, fp);
@@ -151,11 +169,12 @@ int CheckCHGDevInfo(unsigned char *path, struct ClientDev *CDV, unsigned char *C
 {
     unsigned char checkbuf[128];
     unsigned char Strbuf[64];
+    unsigned char Macbuf[64];
     int i;
     time_t cur_time;
     struct tm *info;
 
-    memset(filebuf, 0, strlen(filebuf));
+    memset(filebuf, 0, FILESIZE);
     sprintf(Strbuf, "\"userId\":\"");
     RXCmdtoCHGDev(path, Strbuf, filebuf, checkbuf);
     time(&cur_time);
@@ -169,7 +188,8 @@ int CheckCHGDevInfo(unsigned char *path, struct ClientDev *CDV, unsigned char *C
         }
     }
     #if DBG_EN
-        printf("Before ChargeDeviceCount is %d\n", *ChgDevCt);
+        printf("Before ChargeDeviceCount is %d\n", ChargeDeviceCount);
+        printf("Before *ChgDevCt is %d\n", *ChgDevCt);
     #endif
     if(i == (*ChgDevCt))    // no device mach within charge list or charge list is no device, and add the information into charge list
     {
@@ -177,7 +197,18 @@ int CheckCHGDevInfo(unsigned char *path, struct ClientDev *CDV, unsigned char *C
         RXCmdtoCHGDev(path, "\"type\":\"", filebuf, (CDV+i)->DevType);
         RXCmdtoCHGDev(path, "\"userId\":\"", filebuf, (CDV+i)->DevUserId);
         RXCmdtoCHGDev(path, "\"account\":\"", filebuf, (CDV+i)->DevAccount);
-        RXCmdtoCHGDev(path, "\"mac\":\"", filebuf, (CDV+i)->DevMac);
+        if(strcmp((CDV+i)->DevType, "iOS") == 0)
+        {
+            RXCmdtoCHGDev(path, "\"mac\":\"", filebuf, Macbuf);
+            #if DBG_EN
+                printf("Macbuf is %s\n", Macbuf);
+            #endif
+            checkiOSMac(Macbuf, (CDV+i)->DevMac);
+        }
+        else if(strcmp((CDV+i)->DevType, "android") == 0)
+        {
+            RXCmdtoCHGDev(path, "\"mac\":\"", filebuf, (CDV+i)->DevMac);
+        }
         (CDV+i)->StartTime = cur_time;
         (CDV+i)->CurrentTime = cur_time;
         strftime((CDV+i)->DevFormatSTime, 64, "%x - %X", info);
@@ -194,7 +225,7 @@ int CheckCHGDevInfo(unsigned char *path, struct ClientDev *CDV, unsigned char *C
             printf("(CDV+%d)->DevFormatCTime is : %s\n", i, (CDV+i)->DevFormatCTime);
         #endif
         if(*ChgDevCt < CHGDEVMAX)
-            *ChgDevCt++;
+            (*ChgDevCt)++;
     }
     else    // if device mach within charge list, update Time.
     {
@@ -202,7 +233,8 @@ int CheckCHGDevInfo(unsigned char *path, struct ClientDev *CDV, unsigned char *C
         strftime((CDV+i)->DevFormatCTime, 64, "%x - %X", info);
     }
     #if DBG_EN
-        printf("After ChargeDeviceCount is %d\n", *ChgDevCt);
+        printf("After ChargeDeviceCount is %d\n", ChargeDeviceCount);
+        printf("After *ChgDevCt is %d\n", *ChgDevCt);
     #endif
     WriteChgList(CHGLISTPATH, filebuf, CDV, *ChgDevCt);
 }
