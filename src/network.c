@@ -37,9 +37,13 @@ int GetDeviceMACAddr(unsigned char *path, unsigned char *filebuf)
         while(!feof(fp))
         {
             fgets(filebuf, FILESIZE, fp);
+            #if DBG_EN
+                printf("fgets filebuf : %s\n", filebuf);
+            #endif
             if(strstr(filebuf, Strbuf) != NULL)
             {
               offset = ftell(fp) - strlen(filebuf);
+              //memset(filebuf, 0, FILESIZE);
               sprintf(filebuf, "  \"Network MAC Address\" : \"%s\",\n", macaddr);
               fread(filebuf + (strlen(filebuf)), 1, FILESIZE - (strlen(filebuf)), fp);
               break;

@@ -38,16 +38,6 @@ void checkiOSMac(unsigned char *src, unsigned char *dest)
         }
     }
     dest[j] = '\0';
-/*
-    length = strlen(src);
-    for(i=12,j=0;i>0;i--,j++)
-    {
-        src[j] = src[length - i];
-        if(((j%2) == 0) && (j != 0))
-          src[j++] = ':';
-    }
-    src[j] = '\0';
-    */
 }
 
 
@@ -76,11 +66,6 @@ void ReadJsonVal(unsigned char *src, unsigned char *des)
     des[i] = '\0';
 }
 
-int WriteJsonVal(unsigned char *path, unsigned char *string, unsigned char *filebuf)
-{
-
-}
-
 int RXCmdtoCHGDev(unsigned char *path, unsigned char *string, unsigned char *filebuf, unsigned char *checkbuf)
 {
     FILE *fp;
@@ -92,7 +77,6 @@ int RXCmdtoCHGDev(unsigned char *path, unsigned char *string, unsigned char *fil
     {
         while(!feof(fp))
         {
-            //fgets(filebuf, FILESIZE, fp);
             fread(filebuf, 1, FILESIZE, fp);
             filebuf = strstr(filebuf, string);
             length = strlen(string);
@@ -151,7 +135,10 @@ int WriteChgList(unsigned char *path, unsigned char *filebuf, struct ClientDev *
             fputs(filebuf, fp);
             sprintf(filebuf, "    \"ChgMode\":\"\"\n");
             fputs(filebuf, fp);
-            fputs(" },\n", fp);
+            if((ChgDevCt - i) == 1)
+              fputs(" }\n", fp);
+            else
+              fputs("},\n", fp);
         }
         fputs("]\n", fp);
         fclose(fp);

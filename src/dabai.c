@@ -84,7 +84,15 @@ int main()
               break;
 
             case 3:     // Set Bluetooth Device Name
-              BTIdx= 0;
+              close(fd);
+              ChangBTName("DaBai/RxCommTmp.txt", rxbuf, filebuf);
+              BTIdx = 0;
+              fd = uart_initial(DEV_UART, BAUDRATE, DATABIT, PARITY, STOPBIT);
+              if(fd < 0)
+              {
+                  printf("Uart open error~~~!!!\n");
+                  return -1;
+              }
               break;
 
             default:
