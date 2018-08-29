@@ -1,15 +1,28 @@
 // add test program by ian at 2018-04-25
 #include "dabai.h"
 
+
+void test_pthread1(void)
+{
+  printf("This is pthread test 1 function~~~!!!\n");
+}
+
+void test_pthread2(void)
+{
+  printf("This is pthread test 2 function~~~!!!\n");
+}
+
 int main()
 {
     int fd, recctmain = 0, BTIdx = 0;
     unsigned char *rxbuf;
     unsigned char *filebuf;
-    int reg;
+    int reg, perr;
     time_t Current_sec;
     time_t Present_sec;
     unsigned char BTCheckFlag = 0;
+    pthread_t thrid;
+    struct SocketPara *Sockarg;
 
     rxbuf = (unsigned char *)calloc(UARTRXSIZE, sizeof(unsigned char));
     filebuf = (unsigned char *)calloc(FILESIZE, sizeof(unsigned char));
@@ -69,35 +82,43 @@ int main()
         return -1;
     }
     printf("Dabai process starting~~~!!!\n");
+
+    Sockarg = (struct SocketPara *)malloc(sizeof(struct SocketPara));
+    Sockarg->Addr = "www.ian.com";
+    Sockarg->Port = 12345;
+    Sockarg->NameAddr = 1;
+
+    pthread_create(&thrid, NULL, SockConnProcess, (void *)Sockarg);
     while(1)
     {
-        BTIdx = BTTransferUart(fd, "DaBai/RxCommTmp.txt", rxbuf, filebuf);
-        switch(BTIdx)
+        switch(BTTransferUart(fd, "DaBai/RxCommTmp.txt", rxbuf, filebuf))
         {
             case 1:     // Set Device Network Information
-              BTIdx = 0;
+              //BTIdx = 0;
               break;
 
             case 2:     // Devive Send Account and Devive information to check will be charged
               CheckCHGDevInfo("DaBai/RxCommTmp.txt", ChargeDevice, &ChargeDeviceCount, filebuf);
-              BTIdx = 0;
+              //BTIdx = 0;
               break;
 
             case 3:     // Set Bluetooth Device Name
               close(fd);
               ChangBTName("DaBai/RxCommTmp.txt", rxbuf, filebuf);
-              BTIdx = 0;
+              //BTIdx = 0;
               fd = uart_initial(DEV_UART, BAUDRATE, DATABIT, PARITY, STOPBIT);
               if(fd < 0)
               {
                   printf("Uart open error~~~!!!\n");
-                  return -1;
+                  //return -1;
               }
               break;
 
             default:
               break;
         }
+        sleep(1);
     }
-    return 0;
+
+    exit(0);
 }

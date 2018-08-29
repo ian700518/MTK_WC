@@ -1,6 +1,6 @@
 #include "dabai.h"
 
-#define DBG_EN 1
+#define DBG_EN 0
 
 /*将字符串s中出现的字符c删除*/
 void squeeze(char s[],int c)

@@ -149,30 +149,7 @@ int set_Parity(int fd, int databits, int stopbits, int parity)
         }
         return 0;
 }
-/*
-int send_message(int fd, int mode)
-{
-    char buf[512];
-    int buf_ct, nwrite;
 
-    switch(mode)
-    {
-        case 99:
-            sprintf(buf, "Receive OK\n");
-            buf_ct = sizeof("Receive OK\n");
-            break;
-
-        default:
-            sprintf(buf, "Receive Error\n");
-            buf_ct = sizeof("Receive Error\n");
-            break;
-    }
-    nwrite = write(fd, buf, buf_ct);
-    memset(buf, 0, buf_ct);
-    usleep(buf_ct*RW_BYTETIME);
-    return 0;
-}
-*/
 int uart_read(int fd, unsigned char *buf)
 {
     struct timeval timeout;
@@ -181,20 +158,20 @@ int uart_read(int fd, unsigned char *buf)
 
     while(1)
     {
-        timeout.tv_sec = 0;
-        timeout.tv_usec = 10000;
         FD_ZERO(&readfd);
         FD_SET(fd, &readfd);
+        timeout.tv_sec = 0;
+        timeout.tv_usec = 5000;
         ret = select(fd + 1, &readfd, NULL, NULL, &timeout);
         if(ret < 0)
         {
-            printf("select error\n");
+            printf("select function error\n");
             ret = -1;
             break;
         }
         else if(ret == 0)
         {
-            if(readct != 0 && nread == 0)
+            if(readct > 0)
             {
                 #if DBG_EN
                     for(i=0;i<readct;i++)

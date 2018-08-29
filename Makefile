@@ -36,6 +36,7 @@ define Package/dabai
  SECTION:=utils
  CATEGORY:=Utilities
  TITLE:=Helloworld -- prints a snarky message
+ DEPENDS:=+libpthread
 endef
 
 define Package/dabai/description

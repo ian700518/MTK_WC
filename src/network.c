@@ -1,15 +1,16 @@
 #include "dabai.h"
 
-#define DBG_EN 1
+#define DBG_EN 0
 
 int GetDeviceMACAddr(unsigned char *path, unsigned char *filebuf)
 {
     unsigned char Strbuf[32];
     unsigned int offset = 0;
-    unsigned char macaddr[17];
+    unsigned char macaddr[18];
     FILE *fp;
 
     memset(filebuf, 0, FILESIZE);
+    memset(macaddr, 0, 18);
     fp = fopen("/etc/config/network", "r");
     if(fp != NULL)
     {

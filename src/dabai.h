@@ -7,6 +7,8 @@
 #include <errno.h>      /*錯誤號定義*/
 #include <memory.h>
 #include <time.h>
+#include <pthread.h>
+#include <signal.h>
 
 #define BM78SPP05MC2 1
 //#define BM78SPP05NC2 1			// define Bluetooth module
@@ -25,9 +27,10 @@
 #define CHGDEVMAX 4		// Maxmum Charge Device...
 #define BTCONFPATH "/DaBai/btconf"
 #define SENDTOPHONEPATH "/DaBai/7688.png"
-#define UARTRXSIZE 1024
-#define UARTTXSIZE 1024
-#define FILESIZE 4096
+#define UARTRXSIZE 256
+#define UARTTXSIZE 256
+#define FILESIZE 1024
+#define IMAGESIZE 4096
 #define BTMIDULEPATH "/DaBai/HostDeviceInfo.json"
 #define CHGLISTPATH "/DaBai/OnlineChgList.json"
 
@@ -68,6 +71,20 @@ enum {
 	ERR_GPIO_VAL = 98,
 	ERR_GPIO_RANGE = 97,
 	OK_GPIO = 0,
+};
+/*
+struct BTFPara
+{
+  int fd;
+  unsigned char *buf1;
+  unsigned char *buf2;
+};
+*/
+struct SocketPara
+{
+  unsigned char *Addr;
+  unsigned int Port;
+  char NameAddr;
 };
 
 struct ClientDev
@@ -133,9 +150,13 @@ int GetBTModuleInof(unsigned char *path, unsigned char *rxbuf, unsigned char *fi
 int GetBTModuleName(unsigned char *path, unsigned char *rxbuf, unsigned char *filebuf);
 int BTModuleLeaveConfigMode(unsigned char *rxbuf);
 int BTTransferUart(int fd, unsigned char *path, unsigned char *rxbuf, unsigned char *filebuf);
+//void *BluetoothFunc(void *arg);
 
 // define at subporc.c
 void send_command(unsigned char *command, unsigned char *resulte, int resulte_length);
 int CheckCHGDevInfo(unsigned char *path, struct ClientDev *CDV, unsigned char *ChgDevCt, unsigned char *filebuf);
+
+// define at hsocket.c
+void *SockConnProcess(void *arg);
 
 #endif /* !__DABAI_H_ */

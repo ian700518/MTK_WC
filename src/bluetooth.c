@@ -1,6 +1,6 @@
 #include "dabai.h"
 
-#define DBG_EN 1
+#define DBG_EN 0
 
 int PinSetForBMModule(void)
 {
@@ -375,7 +375,7 @@ int BTTransferUart(int fd, unsigned char *path, unsigned char *rxbuf, unsigned c
 {
     int recct = 0, idx = 0, i = 0;;
     unsigned char checkstr[16];
-    FILE *fp, *fpimg;
+    FILE *fp_uart, *fpimg;
     unsigned char *imgbuf;
 
     memset(rxbuf, 0, UARTRXSIZE);
@@ -387,12 +387,15 @@ int BTTransferUart(int fd, unsigned char *path, unsigned char *rxbuf, unsigned c
             printf("rxbuf is : %s\n", rxbuf);
             printf("BTTransferUart is receive status, count is %d\n", recct);
         #endif
-        fp = fopen(path, "w");
-        if(fp != NULL)
+        fp_uart = fopen(path, "w");
+        if(fp_uart != NULL)
         {
-            fwrite(rxbuf, 1, strlen(rxbuf), fp);
-            fwrite("\n\0", 1, 1, fp);
-            fclose(fp);
+            #if DBG_EN
+                printf("write path %s\n", path);
+            #endif
+            fwrite(rxbuf, 1, strlen(rxbuf), fp_uart);
+            fwrite("\n\0", 1, 1, fp_uart);
+            fclose(fp_uart);
         }
         // check index
         sprintf(checkstr, "\"index\":\"");
@@ -414,19 +417,19 @@ int BTTransferUart(int fd, unsigned char *path, unsigned char *rxbuf, unsigned c
             printf("BTTransferUart rxbuf : %s\n", rxbuf);
             printf("idx : %d\n", idx);
         #endif
-        fp = fopen(path, "r");
-        if(fp != NULL)
+        fp_uart = fopen(path, "r");
+        if(fp_uart != NULL)
         {
             printf("Open RxCommTmp file\n");
-            while(!feof(fp))
+            while(!feof(fp_uart))
             {
                 //fgets(filebuf, UARTRXSIZE, fp);
-                fread(filebuf, 1, FILESIZE, fp);
+                fread(filebuf, 1, FILESIZE, fp_uart);
                 filebuf = strstr(filebuf, "\"type\":\"");
                 if(filebuf != NULL)
                 {
                     ReadJsonVal(filebuf + strlen("\"type\":\""), checkstr);
-                    imgbuf = (unsigned char *)calloc(FILESIZE, sizeof(unsigned char));
+                    imgbuf = (unsigned char *)calloc(IMAGESIZE, sizeof(unsigned char));
                     fpimg = fopen(SENDTOPHONEPATH, "r");       // feedback to Device
                     if(fpimg != NULL)
                     {
@@ -444,7 +447,7 @@ int BTTransferUart(int fd, unsigned char *path, unsigned char *rxbuf, unsigned c
                     }
                 }
             }
-            fclose(fp);
+            fclose(fp_uart);
         }
         return idx;
     }
