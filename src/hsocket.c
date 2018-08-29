@@ -141,18 +141,18 @@ void *SockConnProcess(void *arg)
   printf("into SockConnProcess ~~~!!!\n");
   if(fork() == 0)
   {
-    if(fork() == 0)
-    {
+    //if(fork() == 0)
+    //{
       while(1)
       {
         Connect2Ser(Sockarg->Addr, Sockarg->Port, Sockarg->NameAddr);
         sleep(1);
       }
-    }
-    else
-    {
-      waitpid();
-    }
+    //}
+    //else
+    //{
+    //  waitpid();
+    //}
   }
   else
   {

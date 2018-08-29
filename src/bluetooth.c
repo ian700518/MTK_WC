@@ -1,6 +1,6 @@
 #include "dabai.h"
 
-#define DBG_EN 0
+#define DBG_EN 1
 
 int PinSetForBMModule(void)
 {

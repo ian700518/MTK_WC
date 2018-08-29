@@ -1,6 +1,6 @@
 #include "dabai.h"
 
-#define DBG_EN 0
+#define DBG_EN 1
 
 /*将字符串s中出现的字符c删除*/
 void squeeze(char s[],int c)
@@ -138,7 +138,7 @@ int WriteChgList(unsigned char *path, unsigned char *filebuf, struct ClientDev *
             if((ChgDevCt - i) == 1)
               fputs(" }\n", fp);
             else
-              fputs("},\n", fp);
+              fputs(" },\n", fp);
         }
         fputs("]\n", fp);
         fclose(fp);
@@ -168,9 +168,11 @@ int CheckCHGDevInfo(unsigned char *path, struct ClientDev *CDV, unsigned char *C
     info = localtime(&cur_time);
     for(i=0;i<(*ChgDevCt);i++)
     {
-        if(strcmp(checkbuf, CDV->DevUserId) == 0)
+        if(strcmp(checkbuf, (CDV+i)->DevUserId) == 0)
         {
-            printf("CDV->DevUserId is : %s\n", CDV->DevUserId);
+            #if DBG_EN
+                printf("CDV->DevUserId is : %s\n", (CDV+i)->DevUserId);
+            #endif
             break;    // if the same userid in the charge list
         }
     }
