@@ -377,7 +377,10 @@ int main(int argc, char *argv[])
       }
       else if(strcmp("eeprom", argv[1]) == 0)
       {
-        ReadEEpromCommand(GetEEprom, argv[2], 0x10);
+        if(atoi(argv[2]) <= 0x4FF)
+          ReadEEpromCommand(GetEEprom, atoi(argv[2]), 0x10);
+        else
+          ReadEEpromCommand(GetEEprom, 0x0000, 0x10);
         uart_write(fd, GetEEprom, sizeof(GetEEprom));
         printf("Send Geteeprom command : [");
         for(i=0;i<sizeof(GetEEprom);i++)
