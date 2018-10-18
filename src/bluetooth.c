@@ -137,7 +137,7 @@ int WriteEEpromCommand(unsigned char *commptr, unsigned int addr, unsigned char 
 
 int GetBTModuleInof(unsigned char *path, unsigned char *rxbuf, unsigned char *filebuf)
 {
-    int recct = 0, fd;
+    int recct = 0, fd, i;
     unsigned char BTMBuf[5] = {0xAA, 0x00, 0x01, 0x01};
     unsigned char Strbuf[32] = "  \"Bluetooth MAC Address\"";
     unsigned int offset = 0;
@@ -152,7 +152,14 @@ int GetBTModuleInof(unsigned char *path, unsigned char *rxbuf, unsigned char *fi
         return -1;
     BTMBuf[4] = CommandSetCheckSum(BTMBuf);
     #if DBG_EN
-        printf("Get BT Module Information Command Checksum : 0x%x\n", BTMBuf[4]);
+        printf("Get BT Module Information Command : [");
+        for(i=0;i<5;i++)
+        {
+          if(i < 4)
+            printf("0x%02x ", BTMBuf[i]);
+          else
+            printf("0x%02x]\n", BTMBuf[i]);
+        }
     #endif
     uart_write(fd, BTMBuf, sizeof(BTMBuf));
     usleep(10000);
@@ -160,9 +167,14 @@ int GetBTModuleInof(unsigned char *path, unsigned char *rxbuf, unsigned char *fi
     if(recct > 0)
     {
         #if DBG_EN
-            int i;
+            printf("rxbuf[...](Hex) : [");
             for(i=0;i<recct;i++)
-              printf("rxbuf[%d](Hex) : %02x\n", i, rxbuf[i]);
+            {
+              if(i < recct - 1)
+                printf("0x%02x ", rxbuf[i]);
+              else
+                printf("0x%02x]\n", rxbuf[i]);
+            }
             printf("GetBTModuleInof is receive status, count is %d\n", recct);
         #endif
         json_file = json_object_from_file(path);
@@ -184,7 +196,7 @@ int GetBTModuleInof(unsigned char *path, unsigned char *rxbuf, unsigned char *fi
 
 int GetBTModuleName(unsigned char *path, unsigned char *rxbuf, unsigned char *filebuf)
 {
-    int recct = 0, fd;
+    int recct = 0, fd, i;
     unsigned char BTMBuf[5] = {0xAA, 0x00, 0x01, 0x07};
     unsigned char Strbuf[32] = "  \"Bluetooth Device Name\"";
     unsigned int offset = 0;
@@ -201,7 +213,14 @@ restart:
         return -1;
     BTMBuf[4] = CommandSetCheckSum(BTMBuf);
     #if DBG_EN
-        printf("Get BT Module Name Command Checksum : 0x%x\n", BTMBuf[4]);
+        printf("Get BT Module Name Command  : [");
+        for(i=0;i<5;i++)
+        {
+          if(i < 4)
+            printf("0x%02x ", BTMBuf[i]);
+          else
+            printf("0x%02x]\n", BTMBuf[i]);
+        }
     #endif
     uart_write(fd, BTMBuf, sizeof(BTMBuf));
     usleep(10000);
@@ -210,9 +229,14 @@ restart:
     {
         checksum = CommandSetCheckSum(rxbuf);
         #if DBG_EN
-            int i;
+            printf("rxbuf[...](Hex) : [");
             for(i=0;i<recct;i++)
-              printf("rxbuf[%d](Hex) : %02x\n", i, rxbuf[i]);
+            {
+              if(i < recct - 1)
+                printf("0x%02x ", rxbuf[i]);
+              else
+                printf("0x%02x]\n", rxbuf[i]);
+            }
             printf("GetBTModuleName is receive status, count is %d, checksum is %x\n", recct, checksum);
         #endif
         if(checksum != rxbuf[recct - 1])
@@ -222,7 +246,9 @@ restart:
         }
         rxbuf[recct - 1] = '\0';
         json_file = json_object_from_file(path);
-        printf("josn file is %s\n", json_object_to_json_string(json_file));
+        #if DBG_EN
+            printf("josn file is %s\n", json_object_to_json_string(json_file));
+        #endif
         BTNameStr = (unsigned char *)calloc(128, sizeof(unsigned char));
 
         sprintf(BTNameStr, "%s", rxbuf+6);
@@ -237,16 +263,10 @@ restart:
     usleep(10000);
     return 0;
 }
-/*
-int SetBTModuleName(char *path)
-{
-    int recct = 0, fd;
-    unsigned char BTMBuf[] =
-}
-*/
+
 int BTModuleLeaveConfigMode(unsigned char *rxbuf)
 {
-    int recct = 0, fd;
+    int recct = 0, fd, i;
     unsigned char BTMBuf[6] = {0xAA, 0x00, 0x02, 0x52, 0x00};
     unsigned char checksum;
 
@@ -257,7 +277,14 @@ restart:
         return -1;
     BTMBuf[5] = CommandSetCheckSum(BTMBuf);
     #if DBG_EN
-        printf("Get BT Module Leave Config Mode Command Checksum : 0x%x\n", BTMBuf[5]);
+        printf("Get BT Module Leave Config Mode Command : [");
+        for(i=0;i<5;i++)
+        {
+          if(i < 4)
+            printf("0x%02x ", BTMBuf[i]);
+          else
+            printf("0x%02x]\n", BTMBuf[i]);
+        }
     #endif
     uart_write(fd, BTMBuf, sizeof(BTMBuf));
     usleep(10000);
@@ -266,9 +293,14 @@ restart:
     {
         checksum = CommandSetCheckSum(rxbuf);
         #if DBG_EN
-            int i;
+            printf("rxbuf[...](Hex) : [");
             for(i=0;i<recct;i++)
-              printf("rxbuf[%d](Hex) : %02x\n", i, rxbuf[i]);
+            {
+              if(i < recct - 1)
+                printf("0x%02x ", rxbuf[i]);
+              else
+                printf("0x%02x]\n", rxbuf[i]);
+            }
             printf("GetBTModule Leave Config Mode is receive status, count is %d, checksum is %x\n", recct, checksum);
         #endif
         if(checksum != rxbuf[recct - 1])
@@ -306,7 +338,7 @@ restart:
     if(length > 30)
       length = 30;
     #if DBG_EN
-        printf("length is %d\n", length);
+        printf("Device Name length is %d\n", length);
     #endif
     BTMBuf[0] = 0xAA;
     BTMBuf[1] = ((length + 2) >> 8);
@@ -320,8 +352,14 @@ restart:
     BTMBuf[length+5] = CommandSetCheckSum(BTMBuf);
     #if DBG_EN
         printf("Name is %s\n", Name);
+        printf("Set BT Module Leave Config Mode Command : [");
         for(i=0;i<(length+6);i++)
-            printf("BTMBuf[%d] is %x\n", i, BTMBuf[i]);
+        {
+          if(i < (length+6-1))
+            printf("0x%02x ", BTMBuf[i]);
+          else
+            printf("0x%02x]\n", BTMBuf[i]);
+        }
     #endif
     uart_write(fd, BTMBuf, length+6);
     usleep(100000);
@@ -330,8 +368,14 @@ restart:
     {
         checksum = CommandSetCheckSum(rxbuf);
         #if DBG_EN
+            printf("rxbuf[...](Hex) : [");
             for(i=0;i<recct;i++)
-              printf("rxbuf is : %x\n", rxbuf[i]);
+            {
+              if(i < recct - 1)
+                printf("0x%02x ", rxbuf[i]);
+              else
+                printf("0x%02x]\n", rxbuf[i]);
+            }
             printf("BTModuleChgDevName is receive status, count is %d, checksum is %x\n", recct);
         #endif
         if(checksum != rxbuf[recct - 1])
@@ -344,10 +388,7 @@ restart:
             #if DBG_EN
                 printf("Bluetooth Device Name Change success~~!!!\n");
             #endif
-            usleep(500000);
-            SetGpioVal(GPIO_RESET_NUM, 0);
-            usleep(1000);
-            SetGpioVal(GPIO_RESET_NUM, 1);
+            BTModuleReset();
             memset(rxbuf, 0, strlen(rxbuf));
             while(1)
             {
@@ -371,7 +412,7 @@ restart:
 
 int BTTransferUart(int fd, unsigned char *path, unsigned char *rxbuf, unsigned char *filebuf)
 {
-    int recct = 0, idx = 0, i = 0;;
+    int recct = 0, idx = 0, i = 0;
     unsigned char *checkstr;
     FILE *fp_uart, *fpimg;
     unsigned char *imgbuf;
@@ -384,7 +425,14 @@ int BTTransferUart(int fd, unsigned char *path, unsigned char *rxbuf, unsigned c
     if(recct > 0)
     {
         #if DBG_EN
-            printf("rxbuf is : %s\n", rxbuf);
+            printf("rxbuf[...](Hex) is : [");
+            for(i=0;i<recct;i++)
+            {
+              if(i < recct - 1)
+                printf("0x%02x ", rxbuf[i]);
+              else
+                printf("0x%02x]\n", rxbuf[i]);
+            }
             printf("BTTransferUart is receive status, count is %d\n", recct);
         #endif
         jobj = json_tokener_parse(rxbuf);
@@ -508,9 +556,7 @@ int ChangBTName(unsigned char *path, unsigned char *rxbuf, unsigned char *filebu
         #if DBG_EN
             printf("Uart Write buf is %s\n", rxbuf);
         #endif
-        SetGpioVal(GPIO_RESET_NUM, 0);
-        usleep(1000);
-        SetGpioVal(GPIO_RESET_NUM, 1);
+        BTModuleReset();
         memset(rxbuf, 0, UARTRXSIZE);
         while(1)
         {
