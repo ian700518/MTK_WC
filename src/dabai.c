@@ -45,7 +45,14 @@ int main(int argc, char *argv[])
     reg = 0;
 
     // add check argv, if argv[1] is eeprom. It will be set baudrate value, and baudrate value from argv[2]
-    printf("argc is %d, argv is %s %s %s\n", argc, argv[0], argv[1], argv[2]);
+    printf("argc is %d, argv is \"", argc);
+    for(i=0;i<argc;i++)
+    {
+      if(i < argc - 1)
+        printf("%s ", argv[i]);
+      else
+        printf("%s\"\n", argv[i]);
+    }
     send_command("devmem 0x10000c24 32 0x00000003", NULL, 0);        // Set Uart0 HighSpeed to 1, and real uart0 baudrate will used 115200
     PinSetForBMModule();
     if(argc > 1)
@@ -127,10 +134,9 @@ int main(int argc, char *argv[])
                 if((rxbuf[0] == 0x04) && (rxbuf[3] == 0x01) && (rxbuf[4] == 0x27) && (rxbuf[6] == 0x00))
                 {
                   printf("set eeprom baudrate val success~~!!!\n \
-                          ####################################\n \
-                          Reseting Bluetooth Module ~~!!!\n \
-                          ####################################\n");
-
+                          ====================================\n \
+                          == Reseting Bluetooth Module ~~!! ==\n \
+                          ====================================\n");
 
                   BTModuleReset();
                   ReadEEpromCommand(GetEEprom, 0x0031, 1);
@@ -237,9 +243,9 @@ int main(int argc, char *argv[])
               if((rxbuf[0] == 0x04) && (rxbuf[3] == 0x01) && (rxbuf[4] == 0x27) && (rxbuf[6] == 0x00))
               {
                 printf("set eeprom Operation Pattern val success~~!!!\n \
-                        ####################################\n \
-                        Reseting Bluetooth Module ~~!!!\n \
-                        ####################################\n");
+                        =============================================\n \
+                        ====== Reseting Bluetooth Module ~~!!! ======\n \
+                        =============================================\n");
                 BTModuleReset();
                 printf("After Setting~~~~~\nSend Read Operation Pattern command [");
                 ReadEEpromCommand(GetEEprom, 0x01B1, 1);
@@ -337,9 +343,9 @@ int main(int argc, char *argv[])
               if((rxbuf[0] == 0x04) && (rxbuf[3] == 0x01) && (rxbuf[4] == 0x27) && (rxbuf[6] == 0x00))
               {
                 printf("set eeprom Operation Pattern Delay Time val success~~!!!\n \
-                        ####################################\n \
-                        Reseting Bluetooth Module ~~!!!\n \
-                        ####################################\n");
+                        ========================================================\n \
+                        ============ Reseting Bluetooth Module ~~!! ============\n \
+                        ========================================================\n");
                 BTModuleReset();
                 ReadEEpromCommand(GetEEprom, 0x038B, 1);
                 printf("After Setting~~~~~\nSend Read Operation Pattern Delay Time command [");

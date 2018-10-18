@@ -124,12 +124,13 @@ int WriteEEpromCommand(unsigned char *commptr, unsigned int addr, unsigned char 
   *(commptr + 0) = 0x01;
   *(commptr + 1) = 0x27;
   *(commptr + 2) = 0xFC;
-  *(commptr + 3) = (unsigned char)(addr >> 8) & 0xFF;
-  *(commptr + 4) = (unsigned char)addr & 0xFF;
-  *(commptr + 5) = byte_num;
+  *(commptr + 3) = byte_num + 3;
+  *(commptr + 4) = (unsigned char)(addr >> 8) & 0xFF;
+  *(commptr + 5) = (unsigned char)addr & 0xFF;
+  *(commptr + 6) = byte_num;
   for(i=0;i<byte_num;i++)
   {
-    *(commptr + i + 6) = *(writeptr + i);
+    *(commptr + i + 7) = *(writeptr + i);
   }
   return strlen(commptr);
 }
