@@ -220,8 +220,14 @@ int uart_read(int fd, unsigned char *buf)
             if(readct > 0)
             {
                 #if DBG_EN
+                    printf("Uart Read buf[...](Hex) = [");
                     for(i=0;i<readct;i++)
-                      printf("Read buf[%d] = 0x%02x\n", i, buf[i]);
+                    {
+                      if(i<readct-1)
+                        printf("0x%02x ", buf[i]);
+                      else
+                        printf("0x%02x]\n", buf[i]);
+                    }
                     printf("tty receive data finish!!!\n");
                 #endif
                 ret = readct;
@@ -253,8 +259,14 @@ int uart_write(int fd, unsigned char *buf, unsigned long length)
     unsigned long i;
 
     #if DBG_EN
+      printf("Uart Write buf[...](Hex) = [");
       for(i = 0; i < length; i++)
-        printf("Write buf[%d] = 0x%02x\n", i, buf[i]);
+      {
+        if(i < length - 1)
+          printf("0x%02x ", buf[i]);
+        else
+          printf("0x%02x]\n", buf[i]);
+      }
     #endif
     nwrite = write(fd, buf, length);
     //printf("uart write buf : %s length : %d\n", buf, length);
