@@ -9,9 +9,10 @@
 #include <time.h>
 #include <pthread.h>
 #include <signal.h>
+#include <json-c/json.h>
 
-#define BM78SPP05MC2 1
-//#define BM78SPP05NC2 1			// define Bluetooth module
+//#define BM78SPP05MC2 1
+#define BM78SPP05NC2 1			// define Bluetooth module
 
 #define DEV_UART "/dev/ttyS0"
 #define BAUDRATE 57600
@@ -26,7 +27,7 @@
 #define RW_BYTETIME ((10/(57600/10000))+1)*100
 #define CHGDEVMAX 4		// Maxmum Charge Device...
 #define BTCONFPATH "/DaBai/btconf"
-#define SENDTOPHONEPATH "/DaBai/7688.png"
+#define SENDTOPHONEPATH "/DaBai/chongdian.jpeg"
 #define UARTRXSIZE 256
 #define UARTTXSIZE 256
 #define FILESIZE 1024
@@ -72,19 +73,11 @@ enum {
 	ERR_GPIO_RANGE = 97,
 	OK_GPIO = 0,
 };
-/*
-struct BTFPara
-{
-  int fd;
-  unsigned char *buf1;
-  unsigned char *buf2;
-};
-*/
+
 struct SocketPara
 {
   unsigned char *Addr;
   unsigned int Port;
-  char NameAddr;
 };
 
 struct ClientDev
@@ -126,9 +119,10 @@ char DBStoreId[128];
 int CmdIndex;
 int TypeIdx;
 unsigned char ChargeDeviceCount;
-unsigned char GetBTConfigFlag;
-unsigned char BTIntoConfigMode;
-unsigned char ChangBTModuleNameFlag;
+//unsigned char GetBTConfigFlag;
+//unsigned char BTIntoConfigMode;
+//unsigned char ChangBTModuleNameFlag;
+unsigned char BTEEPROM_MODE;
 
 // define at gpio.c
 unsigned GetGpioVal(int gpio_num);
@@ -150,6 +144,9 @@ int GetBTModuleInof(unsigned char *path, unsigned char *rxbuf, unsigned char *fi
 int GetBTModuleName(unsigned char *path, unsigned char *rxbuf, unsigned char *filebuf);
 int BTModuleLeaveConfigMode(unsigned char *rxbuf);
 int BTTransferUart(int fd, unsigned char *path, unsigned char *rxbuf, unsigned char *filebuf);
+void BTModuleReset(void);
+int ReadEEpromCommand(unsigned char *commptr, unsigned int addr, unsigned char byte_num);
+int WriteEEpromCommand(unsigned char *commptr, unsigned int addr, unsigned char byte_num, unsigned char *writeptr);
 //void *BluetoothFunc(void *arg);
 
 // define at subporc.c

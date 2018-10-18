@@ -29,14 +29,14 @@ unsigned GetGpioVal(int gpio_num)
   	sprintf(command, "devmem 0x%08x", reg_add);
   	send_command(command, resulte, sizeof(resulte));
   	reg_val = strtoul(resulte + 2, NULL, 16);
-    reg_val ^= (1 << mod_v);
-    if(reg_val != 0)
+    //reg_val ^= (1 << mod_v);
+    if(((reg_val >> mod_v) & 0x00000001) != 0)
     {
-        return 0;
+        return 1;
     }
     else
     {
-        return 1;
+        return 0;
     }
 }
 

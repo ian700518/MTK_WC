@@ -20,7 +20,7 @@ include $(TOPDIR)/rules.mk
 
 # Name and release number of this package
 PKG_NAME:=dabai
-PKG_VERSION:=1.0.0
+PKG_VERSION:=2.1.1
 PKG_RELEASE:=1
 
 # This specifies the directory where we're going to build the program.
@@ -35,8 +35,8 @@ include $(INCLUDE_DIR)/package.mk
 define Package/dabai
  SECTION:=utils
  CATEGORY:=Utilities
- TITLE:=Helloworld -- prints a snarky message
- DEPENDS:=+libpthread
+ TITLE:=Dabai -- prints a snarky message
+ DEPENDS:=+libpthread +libjson-c
 endef
 
 define Package/dabai/description
@@ -71,8 +71,8 @@ endef
 # command to copy the binary file from its current location (in our case the build
 # directory) to the install directory.
 define Package/dabai/install
-	$(INSTALL_DIR) $(1)/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/dabai $(1)/bin/
+	$(INSTALL_DIR) $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/dabai $(1)/usr/bin/
 	$(CP) ./files/* $(1)
 endef
 

@@ -10,17 +10,21 @@
 
 #define DBG_EN 0
 
-int Connect2Ser(char *HostAddr, int HostPort, int SelNA)
+int Connect2Ser(char *HostAddr, int HostPort)
 {
     struct sockaddr_in server;
+    struct sockaddr_in *sockaddr_ipv4;
     int sock;
     char buf[256];
     unsigned char *Fbuf;
     int n, i, ret, recct = 0, write_num = 0, sendfilesize = 0;;
-    struct hostent *p;
+    //struct hostent *p;
     struct timeval timeout;
     fd_set readfd;
     FILE *fp_sock;
+    struct addrinfo *result = NULL;
+    //struct addrinfo *ptr = NULL;
+    //struct addrinfo hints;
 
     /* 製作 socket */
     signal(SIGPIPE, SIG_IGN);
@@ -30,26 +34,61 @@ int Connect2Ser(char *HostAddr, int HostPort, int SelNA)
     server.sin_family = AF_INET;
     server.sin_port = htons(HostPort);
 
-    /* Get Server Site address */
-    if(SelNA) // get Name address
+    ret = getaddrinfo(HostAddr, NULL, NULL, &result);
+    if(ret != 0)
     {
-      //printf("Get a Name Address\n");
-      p = gethostbyname(HostAddr);
-      if(p != NULL)
-      {
-        for(i=0;p->h_addr_list[i] != NULL;i++)
-        {
-          inet_pton(AF_INET, inet_ntoa(*(struct in_addr *)p->h_addr_list[i]), &server.sin_addr.s_addr);
-        }
-      }
-      else
-      {
-        //printf("Get host name error~~~!!!!\n");
-        return -1;
-      }
+      #if DBG_EN
+          printf("Get host name error~~~!!!!\n");
+      #endif
+      return -1;
     }
-    else  // get IP Address
-      inet_pton(AF_INET, HostAddr, &server.sin_addr.s_addr);
+    switch(result->ai_family)
+    {
+        case AF_UNSPEC:
+            #if DBG_EN
+                printf("Unspecified\n");
+            #endif
+            break;
+        case AF_INET:
+            #if DBG_EN
+                printf("AF_INET (IPv4)\n");
+            #endif
+            sockaddr_ipv4 = (struct sockaddr_in *)result->ai_addr;
+            #if DBG_EN
+                printf("\tIPv4 address %s\n", inet_ntoa(sockaddr_ipv4->sin_addr));
+            #endif
+            inet_pton(AF_INET, inet_ntoa(sockaddr_ipv4->sin_addr), &server.sin_addr.s_addr);
+            break;
+        case AF_INET6:
+            #if DBG_EN
+                printf("AF_INET6 (IPv6)\n");
+            #endif
+            /*
+            // the InetNtop function is available on Windows Vista and later
+            // sockaddr_ipv6 = (struct sockaddr_in6 *) ptr->ai_addr;
+            // printf("\tIPv6 address %s\n",
+            //    InetNtop(AF_INET6, &sockaddr_ipv6->sin6_addr, ipstringbuffer, 46) );
+
+            // We use WSAAddressToString since it is supported on Windows XP and later
+            sockaddr_ip = (LPSOCKADDR) ptr->ai_addr;
+            // The buffer length is changed by each call to WSAAddresstoString
+            // So we need to set it for each iteration through the loop for safety
+            ipbufferlength = 46;
+            iRetval = WSAAddressToString(sockaddr_ip, (DWORD) ptr->ai_addrlen, NULL,
+                ipstringbuffer, &ipbufferlength );
+            if (iRetval)
+                printf("WSAAddressToString failed with %u\n", WSAGetLastError() );
+            else
+                printf("\tIPv6 address %s\n", ipstringbuffer);
+                */
+            break;
+        default:
+            #if DBG_EN
+                printf("Other %ld\n", result->ai_family);
+            #endif
+            break;
+    }
+
 
     #if DBG_EN
         printf("serve ip is %s\n", inet_ntoa(server.sin_addr));
@@ -136,16 +175,19 @@ int Connect2Ser(char *HostAddr, int HostPort, int SelNA)
 void *SockConnProcess(void *arg)
 {
   struct SocketPara *Sockarg;
-  Sockarg = (struct SocketPara *) arg;
+  Sockarg = (struct SocketPara *)arg;
 
   printf("into SockConnProcess ~~~!!!\n");
-  if(fork() == 0)
-  {
+  //if(fork() == 0)
+  //{
     //if(fork() == 0)
     //{
+      #if DBG_EN
+          printf("First print Nameaddr Sockarg->Addr '%s', Sockarg->Port '%d'\n", Sockarg->Addr, Sockarg->Port);
+      #endif
       while(1)
       {
-        Connect2Ser(Sockarg->Addr, Sockarg->Port, Sockarg->NameAddr);
+        Connect2Ser(Sockarg->Addr, Sockarg->Port);
         sleep(1);
       }
     //}
@@ -153,9 +195,9 @@ void *SockConnProcess(void *arg)
     //{
     //  waitpid();
     //}
-  }
-  else
-  {
-    waitpid();
-  }
+  //}
+  //else
+  //{
+  //  waitpid();
+  //}
 }

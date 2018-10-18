@@ -11,12 +11,58 @@
 int uart_initial(char *dev, int baudrate, int bits, int parity, int stopbits)
 {
     int fd;
+    unsigned char membuf[64];
+    int reg;
 
     fd = open_uart(dev);
     if(fd > 0)
     {
         set_speed(fd, baudrate);
         set_Parity(fd, bits, stopbits, parity);
+
+        // count 115200
+        // 40000000 / 115200 = 437 --> (12 * 28)
+        // sample = 28
+        // {DLM:DLL} = 12
+
+        // count 57600
+        // 40000000 / 57600 = 694 --> (24 * 28)
+        // sample = 28
+        // {DLM:DLL} = 24
+
+        // set 0x10000c0c bit7 to 1
+        send_command("devmem 0x10000c0c", membuf, sizeof(membuf));
+        #if DBG_EN
+          printf("SET DLAB to 1 0x10000c0c value is %s\n", membuf);
+        #endif
+        reg = strtoul(membuf + 2, NULL, 16);
+        reg |= 0x00000080;
+        #if DBG_EN
+          printf("SET DLAB to 1 0x10000c0c value is 0x%x\n", reg);
+        #endif
+        sprintf(membuf, "devmem 0x10000c0c 32 0x%08x", reg);
+        send_command(membuf, NULL, 0);
+
+        // write value 12 to DLL register
+        send_command("devmem 0x10000c00 32 0x0000000c", NULL, 0);
+
+        // set 0x10000c0c bit7 to 0
+        send_command("devmem 0x10000c0c", membuf, sizeof(membuf));
+        reg = strtoul(membuf + 2, NULL, 16);
+        reg &= 0xFFFFFF7F;
+        #if DBG_EN
+          printf("SET DLAB to 0 0x10000c0c value is 0x%x\n", reg);
+        #endif
+        sprintf(membuf, "devmem 0x10000c0c 32 0x%08x", reg);
+        send_command(membuf, NULL, 0);
+
+        // write value 28 to sample count register
+        send_command("devmem 0x10000c28 32 0x0000001c", NULL, 0);
+        // write value 14 to sample point register (sapmle point is half of sample count)
+        if(BTEEPROM_MODE == 1)
+          send_command("devmem 0x10000c2c 32 0x0000000e", NULL, 0);
+        else
+          send_command("devmem 0x10000c2c 32 0x00000018", NULL, 0);
         return fd;
     }
     return -1;
@@ -161,7 +207,7 @@ int uart_read(int fd, unsigned char *buf)
         FD_ZERO(&readfd);
         FD_SET(fd, &readfd);
         timeout.tv_sec = 0;
-        timeout.tv_usec = 5000;
+        timeout.tv_usec = 30000;
         ret = select(fd + 1, &readfd, NULL, NULL, &timeout);
         if(ret < 0)
         {
@@ -175,7 +221,7 @@ int uart_read(int fd, unsigned char *buf)
             {
                 #if DBG_EN
                     for(i=0;i<readct;i++)
-                      printf("Read buf[%d] = 0x%x\n", i, buf[i]);
+                      printf("Read buf[%d] = 0x%02x\n", i, buf[i]);
                     printf("tty receive data finish!!!\n");
                 #endif
                 ret = readct;
@@ -208,7 +254,7 @@ int uart_write(int fd, unsigned char *buf, unsigned long length)
 
     #if DBG_EN
       for(i = 0; i < length; i++)
-        printf("Write buf[%d] = 0x%x\n", i, buf[i]);
+        printf("Write buf[%d] = 0x%02x\n", i, buf[i]);
     #endif
     nwrite = write(fd, buf, length);
     //printf("uart write buf : %s length : %d\n", buf, length);

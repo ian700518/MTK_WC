@@ -53,95 +53,51 @@ void send_command(unsigned char *command, unsigned char *resulte, int resulte_le
     pclose(fp);
 }
 
-void ReadJsonVal(unsigned char *src, unsigned char *des)
-{
-    int i = 0;
-
-    // check first " symbol
-    while(src[i] != '\"')
-    {
-        des[i] = src[i];
-        i++;
-    }
-    des[i] = '\0';
-}
-
-int RXCmdtoCHGDev(unsigned char *path, unsigned char *string, unsigned char *filebuf, unsigned char *checkbuf)
-{
-    FILE *fp;
-    unsigned int length;
-
-    memset(filebuf, 0, FILESIZE);
-    fp = fopen(path, "r");
-    if(fp != NULL)
-    {
-        while(!feof(fp))
-        {
-            fread(filebuf, 1, FILESIZE, fp);
-            filebuf = strstr(filebuf, string);
-            length = strlen(string);
-            #if DBG_EN
-                printf("string is %s\n", string);
-                printf("filebuf is %s\n", filebuf);
-            #endif
-            if(filebuf != NULL)
-            {
-                ReadJsonVal(filebuf + length, checkbuf);
-                break;
-            }
-        }
-        #if DBG_EN
-            printf("checkbuf is %s\n", checkbuf);
-        #endif
-        fclose(fp);
-        return 1;
-    }
-    return 0;
-}
-
 int WriteChgList(unsigned char *path, unsigned char *filebuf, struct ClientDev *CDV, unsigned char ChgDevCt)
 {
     FILE *fp;
-    int i;
+    int i, length = 0;
+    struct json_object *jobj[CHGDEVMAX];
+    struct json_object *data;
 
+    data = json_object_new_array();
+    #if DBG_EN
+        printf("into WriteChgList~~~!!\n");
+    #endif
+    for(i=0; i<ChgDevCt; i++)
+    {
+
+      jobj[i] = json_object_new_object();
+      json_object_object_add(jobj[i], "index", json_object_new_int(CDV[i].DevIdx));
+      json_object_object_add(jobj[i], "type", json_object_new_string((CDV+i)->DevType));
+      json_object_object_add(jobj[i], "userId", json_object_new_string((CDV+i)->DevUserId));
+      json_object_object_add(jobj[i], "account", json_object_new_string((CDV+i)->DevAccount));
+      json_object_object_add(jobj[i], "mac", json_object_new_string((CDV+i)->DevMac));
+      json_object_object_add(jobj[i], "StartTime", json_object_new_int(CDV[i].StartTime));
+      json_object_object_add(jobj[i], "CurrentTime", json_object_new_int(CDV[i].CurrentTime));
+      json_object_object_add(jobj[i], "FormatSTime", json_object_new_string((CDV+i)->DevFormatSTime));
+      json_object_object_add(jobj[i], "FormatCTime", json_object_new_string((CDV+i)->DevFormatCTime));
+      json_object_object_add(jobj[i], "RemainT_Hr", json_object_new_int(CDV[i].RemainT_Hr));
+      json_object_object_add(jobj[i], "RemainT_Min", json_object_new_int(CDV[i].RemainT_Min));
+      json_object_object_add(jobj[i], "ChgMode", json_object_new_int(CDV[i].ChgMode));
+      #if DBG_EN
+          printf("at for loop jobj : %s\nat for loop data : %s\n", json_object_to_json_string(jobj[i]), json_object_to_json_string(data));
+      #endif
+      json_object_array_add(data, jobj[i]);
+    }
+    //jobj = json_tokener_parse(filebuf);
+    filebuf = json_object_to_json_string(data);
+    #if DBG_EN
+        printf("json file : %s\n", filebuf);
+    #endif
+    for(i=0;i<ChgDevCt;i++)
+      json_object_put(jobj[i]);
+    json_object_put(data);
     fp = fopen(path, "w+");
     if(fp != NULL)
     {
-        fputs("[\n", fp);
-        for(i=0;i<ChgDevCt;i++)
-        {
-            fputs(" {\n", fp);
-            sprintf(filebuf, "    \"index\":\"%d\",\n", (CDV+i)->DevIdx);
-            fputs(filebuf, fp);
-            sprintf(filebuf, "    \"type\":\"%s\",\n", (CDV+i)->DevType);
-            fputs(filebuf, fp);
-            sprintf(filebuf, "    \"userId\":\"%s\",\n", (CDV+i)->DevUserId);
-            fputs(filebuf, fp);
-            sprintf(filebuf, "    \"account\":\"%s\",\n", (CDV+i)->DevAccount);
-            fputs(filebuf, fp);
-            sprintf(filebuf, "    \"mac\":\"%s\",\n", (CDV+i)->DevMac);
-            fputs(filebuf, fp);
-            sprintf(filebuf, "    \"StartTime\":\"%d\",\n", (CDV+i)->StartTime);
-            fputs(filebuf, fp);
-            sprintf(filebuf, "    \"CurrentTime\":\"%d\",\n", (CDV+i)->CurrentTime);
-            fputs(filebuf, fp);
-            sprintf(filebuf, "    \"FormatSTime\":\"%s\",\n", (CDV+i)->DevFormatSTime);
-            fputs(filebuf, fp);
-            sprintf(filebuf, "    \"FormatCTime\":\"%s\",\n", (CDV+i)->DevFormatCTime);
-            fputs(filebuf, fp);
-            sprintf(filebuf, "    \"RemainT_Hr\":\"\",\n");
-            fputs(filebuf, fp);
-            sprintf(filebuf, "    \"RemainT_Min\":\"\",\n");
-            fputs(filebuf, fp);
-            sprintf(filebuf, "    \"ChgMode\":\"\"\n");
-            fputs(filebuf, fp);
-            if((ChgDevCt - i) == 1)
-              fputs(" }\n", fp);
-            else
-              fputs(" },\n", fp);
-        }
-        fputs("]\n", fp);
-        fclose(fp);
+      fwrite(filebuf, strlen(filebuf), 1, fp);
+      fclose(fp);
     }
 }
 
@@ -154,16 +110,33 @@ int WriteChgList(unsigned char *path, unsigned char *filebuf, struct ClientDev *
 */
 int CheckCHGDevInfo(unsigned char *path, struct ClientDev *CDV, unsigned char *ChgDevCt, unsigned char *filebuf)
 {
-    unsigned char checkbuf[128];
-    unsigned char Strbuf[64];
-    unsigned char Macbuf[64];
+    unsigned char *checkbuf;
+    //unsigned char Strbuf[64];
+    unsigned char *Macbuf;
     int i;
     time_t cur_time;
     struct tm *info;
+    struct json_object *jobj;
+    FILE *fp_check;
 
     memset(filebuf, 0, FILESIZE);
-    sprintf(Strbuf, "\"userId\":\"");
-    RXCmdtoCHGDev(path, Strbuf, filebuf, checkbuf);
+    checkbuf = (unsigned char *)calloc(128, sizeof(unsigned char));
+    Macbuf = (unsigned char *)calloc(64, sizeof(unsigned char));
+    fp_check = fopen(path, "r");
+    if(fp_check != NULL)
+    {
+      while(!feof(fp_check))
+      {
+        fread(filebuf, 1, FILESIZE, fp_check);
+      }
+      fclose(fp_check);
+    }
+    jobj = json_tokener_parse(filebuf);
+    checkbuf = json_object_get_string(json_object_object_get(jobj, "userId"));
+    #if DBG_EN
+        printf("filebuf to jobj string %s\n", json_object_to_json_string(jobj));
+        printf("json-c checkbuf : %d\n", checkbuf);
+    #endif
     time(&cur_time);
     info = localtime(&cur_time);
     for(i=0;i<(*ChgDevCt);i++)
@@ -183,20 +156,20 @@ int CheckCHGDevInfo(unsigned char *path, struct ClientDev *CDV, unsigned char *C
     if(i == (*ChgDevCt))    // no device mach within charge list or charge list is no device, and add the information into charge list
     {
         (CDV+i)->DevIdx = *ChgDevCt;
-        RXCmdtoCHGDev(path, "\"type\":\"", filebuf, (CDV+i)->DevType);
-        RXCmdtoCHGDev(path, "\"userId\":\"", filebuf, (CDV+i)->DevUserId);
-        RXCmdtoCHGDev(path, "\"account\":\"", filebuf, (CDV+i)->DevAccount);
+        sprintf((CDV+i)->DevType, "%s", json_object_get_string(json_object_object_get(jobj, "type")));
+        sprintf((CDV+i)->DevUserId, "%s", json_object_get_string(json_object_object_get(jobj, "userId")));
+        sprintf((CDV+i)->DevAccount, "%s", json_object_get_string(json_object_object_get(jobj, "account")));
         if(strcmp((CDV+i)->DevType, "iOS") == 0)
         {
-            RXCmdtoCHGDev(path, "\"mac\":\"", filebuf, Macbuf);
-            #if DBG_EN
-                printf("Macbuf is %s\n", Macbuf);
-            #endif
-            checkiOSMac(Macbuf, (CDV+i)->DevMac);
+          Macbuf = json_object_get_string(json_object_object_get(jobj, "mac"));
+          #if DBG_EN
+              printf("Macbuf is %s\n", Macbuf);
+          #endif
+          checkiOSMac(Macbuf, (CDV+i)->DevMac);
         }
         else if(strcmp((CDV+i)->DevType, "android") == 0)
         {
-            RXCmdtoCHGDev(path, "\"mac\":\"", filebuf, (CDV+i)->DevMac);
+          sprintf((CDV+i)->DevMac, "%s", json_object_get_string(json_object_object_get(jobj, "mac")));
         }
         (CDV+i)->StartTime = cur_time;
         (CDV+i)->CurrentTime = cur_time;
@@ -225,5 +198,6 @@ int CheckCHGDevInfo(unsigned char *path, struct ClientDev *CDV, unsigned char *C
         printf("After ChargeDeviceCount is %d\n", ChargeDeviceCount);
         printf("After *ChgDevCt is %d\n", *ChgDevCt);
     #endif
+    json_object_put(jobj);      // if new json object, After used must be free json object
     WriteChgList(CHGLISTPATH, filebuf, CDV, *ChgDevCt);
 }

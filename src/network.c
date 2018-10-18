@@ -8,6 +8,8 @@ int GetDeviceMACAddr(unsigned char *path, unsigned char *filebuf)
     unsigned int offset = 0;
     unsigned char macaddr[18];
     FILE *fp;
+    struct json_object *json_file;
+    unsigned char *EthAddrStr;
 
     memset(filebuf, 0, FILESIZE);
     memset(macaddr, 0, 18);
@@ -30,38 +32,13 @@ int GetDeviceMACAddr(unsigned char *path, unsigned char *filebuf)
         }
         fclose(fp);
     }
+    json_file = json_object_from_file(path);
+    printf("josn file is %s\n", json_object_to_json_string(json_file));
+    EthAddrStr = (unsigned char *)calloc(128, sizeof(unsigned char));
 
-    fp = fopen(path, "r+");
-    if(fp != NULL)
-    {
-        sprintf(Strbuf, "  \"Network MAC Address\"");
-        while(!feof(fp))
-        {
-            fgets(filebuf, FILESIZE, fp);
-            #if DBG_EN
-                printf("fgets filebuf : %s\n", filebuf);
-            #endif
-            if(strstr(filebuf, Strbuf) != NULL)
-            {
-              offset = ftell(fp) - strlen(filebuf);
-              //memset(filebuf, 0, FILESIZE);
-              sprintf(filebuf, "  \"Network MAC Address\" : \"%s\",\n", macaddr);
-              fread(filebuf + (strlen(filebuf)), 1, FILESIZE - (strlen(filebuf)), fp);
-              break;
-            }
-        }
-        fclose(fp);
-        if(offset != 0)
-        {
-            fp = fopen(path, "r+");
-            fseek(fp, offset, SEEK_SET);
-            fputs(filebuf, fp);
-            #if DBG_EN
-                printf("fputs filebuf : %s\n filebuf length : %d\n", filebuf, strlen(filebuf));
-            #endif
-            fclose(fp);
-            return 1;
-        }
-    }
+    sprintf(EthAddrStr, "%s", macaddr);
+    json_object_object_del(json_file, "Network MAC Address");
+    json_object_object_add(json_file, "Network MAC Address", json_object_new_string(EthAddrStr));
+    json_object_to_file(path, json_file);
     return 0;
 }

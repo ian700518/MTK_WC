@@ -16,7 +16,7 @@
 #hsocket.o: hsocket.c
 #	$(CC) $(CFLAGS) -c hsocket.c
 dabai: dabai.o bluetooth.o uart.o gpio.o network.o subproc.o hsocket.o
-	$(CC) $(CFLAGS) -o $@ $^ -lpthread
+	$(CC) $(CFLAGS) -o $@ $^ -lpthread -ljson-c
 %.o: %.c dabai.h
 	$(CC) $(CFLAGS) -c $<
 

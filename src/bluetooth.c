@@ -97,6 +97,43 @@ unsigned char CommandSetCheckSum(unsigned char *CommandBuf)
     return (checksum);
 }
 
+void BTModuleReset(void)
+{
+  SetGpioVal(GPIO_RESET_NUM, 0);
+  usleep(150000);
+  SetGpioVal(GPIO_RESET_NUM, 1);
+  sleep(3);
+}
+
+int ReadEEpromCommand(unsigned char *commptr, unsigned int addr, unsigned char byte_num)
+{
+  *(commptr + 0) = 0x01;
+  *(commptr + 1) = 0x29;
+  *(commptr + 2) = 0xFC;
+  *(commptr + 3) = 0x03;
+  *(commptr + 4) = (unsigned char)(addr >> 8) & 0xFF;
+  *(commptr + 5) = (unsigned char)addr & 0xFF;
+  *(commptr + 6) = byte_num;
+  return strlen(commptr);
+}
+
+int WriteEEpromCommand(unsigned char *commptr, unsigned int addr, unsigned char byte_num, unsigned char *writeptr)
+{
+  unsigned char i;
+
+  *(commptr + 0) = 0x01;
+  *(commptr + 1) = 0x27;
+  *(commptr + 2) = 0xFC;
+  *(commptr + 3) = (unsigned char)(addr >> 8) & 0xFF;
+  *(commptr + 4) = (unsigned char)addr & 0xFF;
+  *(commptr + 5) = byte_num;
+  for(i=0;i<byte_num;i++)
+  {
+    *(commptr + i + 6) = *(writeptr + i);
+  }
+  return strlen(commptr);
+}
+
 int GetBTModuleInof(unsigned char *path, unsigned char *rxbuf, unsigned char *filebuf)
 {
     int recct = 0, fd;
@@ -104,6 +141,8 @@ int GetBTModuleInof(unsigned char *path, unsigned char *rxbuf, unsigned char *fi
     unsigned char Strbuf[32] = "  \"Bluetooth MAC Address\"";
     unsigned int offset = 0;
     FILE *fp;
+    struct json_object *json_file;
+    unsigned char *BTAddrStr;
 
     memset(rxbuf, 0, UARTRXSIZE);
     memset(filebuf, 0, FILESIZE);
@@ -125,36 +164,14 @@ int GetBTModuleInof(unsigned char *path, unsigned char *rxbuf, unsigned char *fi
               printf("rxbuf[%d](Hex) : %02x\n", i, rxbuf[i]);
             printf("GetBTModuleInof is receive status, count is %d\n", recct);
         #endif
-        fp = fopen(path, "r+");
-        if(fp != NULL)
-        {
-            while(!feof(fp))
-            {
-                fgets(filebuf, FILESIZE, fp);
-                #if DBG_EN
-                    printf("fgets filebuf : %s\n", filebuf);
-                #endif
-                if(strstr(filebuf, Strbuf) != NULL)
-                {
-                  offset = ftell(fp) - strlen(filebuf);
-                  memset(filebuf, 0, FILESIZE);
-                  sprintf(filebuf, "  \"Bluetooth MAC Address\" : \"%02x:%02x:%02x:%02x:%02x:%02x\",\n", rxbuf[recct - 2], rxbuf[recct - 3], rxbuf[recct - 4], rxbuf[recct - 5], rxbuf[recct - 6], (rxbuf[recct - 8] << 4) | rxbuf[recct - 7]);
-                  fread(filebuf + (strlen(filebuf)), 1, FILESIZE - (strlen(filebuf)), fp);
-                  break;
-                }
-            }
-            fclose(fp);
-            if(offset != 0)
-            {
-                fp = fopen(path, "r+");
-                fseek(fp, offset, SEEK_SET);
-                fputs(filebuf, fp);
-                #if DBG_EN
-                    printf("fputs filebuf : %s\n", filebuf);
-                #endif
-                fclose(fp);
-            }
-        }
+        json_file = json_object_from_file(path);
+        printf("josn file is %s\n", json_object_to_json_string(json_file));
+        BTAddrStr = (unsigned char *)calloc(128, sizeof(unsigned char));
+
+        sprintf(BTAddrStr, "%02x:%02x:%02x:%02x:%02x:%02x", rxbuf[recct - 2], rxbuf[recct - 3], rxbuf[recct - 4], rxbuf[recct - 5], rxbuf[recct - 6], (rxbuf[recct - 8] << 4) | rxbuf[recct - 7]);
+        json_object_object_del(json_file, "Bluetooth MAC Address");
+        json_object_object_add(json_file, "Bluetooth MAC Address", json_object_new_string(BTAddrStr));
+        json_object_to_file(path, json_file);
         close(fd);
         usleep(10000);
         return 1;
@@ -172,6 +189,8 @@ int GetBTModuleName(unsigned char *path, unsigned char *rxbuf, unsigned char *fi
     unsigned int offset = 0;
     unsigned char checksum;
     FILE *fp;
+    struct json_object *json_file;
+    unsigned char *BTNameStr;
 
 restart:
     memset(rxbuf, 0, UARTRXSIZE);
@@ -201,36 +220,14 @@ restart:
             goto restart;
         }
         rxbuf[recct - 1] = '\0';
-        fp = fopen(path, "r+");
-        if(fp != NULL)
-        {
-            while(!feof(fp))
-            {
-                fgets(filebuf, FILESIZE, fp);
-                #if DBG_EN
-                    printf("fgets filebuf : %s\n", filebuf);
-                #endif
-                if(strstr(filebuf, Strbuf) != NULL)
-                {
-                  offset = ftell(fp) - strlen(filebuf);
-                  memset(filebuf, 0, FILESIZE);
-                  sprintf(filebuf, "  \"Bluetooth Device Name\" : \"%s\"\n", (rxbuf + 6));
-                  fread(filebuf + (strlen(filebuf)), 1, FILESIZE - strlen(filebuf), fp);
-                  break;
-                }
-            }
-            fclose(fp);
-            if(offset != 0)
-            {
-                fp = fopen(path, "r+");
-                fseek(fp, offset, SEEK_SET);
-                fputs(filebuf, fp);
-                #if DBG_EN
-                    printf("fputs filebuf : %s\n", filebuf);
-                #endif
-                fclose(fp);
-            }
-        }
+        json_file = json_object_from_file(path);
+        printf("josn file is %s\n", json_object_to_json_string(json_file));
+        BTNameStr = (unsigned char *)calloc(128, sizeof(unsigned char));
+
+        sprintf(BTNameStr, "%s", rxbuf+6);
+        json_object_object_del(json_file, "Bluetooth Device Name");
+        json_object_object_add(json_file, "Bluetooth Device Name", json_object_new_string(BTNameStr));
+        json_object_to_file(path, json_file);
         close(fd);
         usleep(10000);
         return 1;
@@ -374,12 +371,14 @@ restart:
 int BTTransferUart(int fd, unsigned char *path, unsigned char *rxbuf, unsigned char *filebuf)
 {
     int recct = 0, idx = 0, i = 0;;
-    unsigned char checkstr[16];
+    unsigned char *checkstr;
     FILE *fp_uart, *fpimg;
     unsigned char *imgbuf;
+    struct json_object *jobj;
 
     memset(rxbuf, 0, UARTRXSIZE);
     memset(filebuf, 0, FILESIZE);
+    checkstr = (unsigned char *)calloc(16, sizeof(unsigned char));
     recct = uart_read(fd, rxbuf);
     if(recct > 0)
     {
@@ -387,67 +386,77 @@ int BTTransferUart(int fd, unsigned char *path, unsigned char *rxbuf, unsigned c
             printf("rxbuf is : %s\n", rxbuf);
             printf("BTTransferUart is receive status, count is %d\n", recct);
         #endif
+        jobj = json_tokener_parse(rxbuf);
+        if(is_error(jobj))
+        {
+          fp_uart = fopen("/DaBai/ErrorCmd.txt", "w");
+          if(fp_uart != NULL)
+          {
+            fwrite(rxbuf, 1, recct, fp_uart);
+            fclose(fp_uart);
+          }
+          #if DBG_EN
+              printf("rxbuf format is error, not mach json file format\n");
+          #endif
+          return -1;
+        }
+        printf("rxbuf to jobj string %s\n", json_object_to_json_string(jobj));
+        idx = json_object_get_int(json_object_object_get(jobj, "index"));
+        #if DBG_EN
+            printf("json-c idx : %d\n", idx);
+        #endif
+        if(idx == 0 || idx == NULL)
+        {
+          #if DBG_EN
+              printf("json-c idx : %d\n", idx);
+          #endif
+          return -1;
+        }
         fp_uart = fopen(path, "w");
         if(fp_uart != NULL)
         {
             #if DBG_EN
                 printf("write path %s\n", path);
             #endif
-            fwrite(rxbuf, 1, strlen(rxbuf), fp_uart);
-            fwrite("\n\0", 1, 1, fp_uart);
+            fwrite(json_object_to_json_string(jobj), 1, strlen(json_object_to_json_string(jobj)), fp_uart);
+            //fwrite("\n\0", 1, 1, fp_uart);
             fclose(fp_uart);
         }
-        // check index
-        sprintf(checkstr, "\"index\":\"");
-        rxbuf = strstr(rxbuf, checkstr);
-        if(rxbuf != NULL)
+        json_object_put(jobj);      // if new json object, After used must be free json object
+        if(idx == 2)
         {
-            idx = strtoul(rxbuf + (strlen(checkstr)), NULL, 10);
-        }
-        else
-        {
-            sprintf(checkstr, "\"index\" : \"");
-            rxbuf = strstr(rxbuf, checkstr);
-            if(rxbuf != NULL)
-            {
-                idx = strtoul(rxbuf + (strlen(checkstr)), NULL, 10);
-            }
-        }
-        #if DBG_EN
-            printf("BTTransferUart rxbuf : %s\n", rxbuf);
-            printf("idx : %d\n", idx);
-        #endif
-        fp_uart = fopen(path, "r");
-        if(fp_uart != NULL)
-        {
-            printf("Open RxCommTmp file\n");
-            while(!feof(fp_uart))
-            {
-                //fgets(filebuf, UARTRXSIZE, fp);
-                fread(filebuf, 1, FILESIZE, fp_uart);
-                filebuf = strstr(filebuf, "\"type\":\"");
-                if(filebuf != NULL)
-                {
-                    ReadJsonVal(filebuf + strlen("\"type\":\""), checkstr);
-                    imgbuf = (unsigned char *)calloc(IMAGESIZE, sizeof(unsigned char));
-                    fpimg = fopen(SENDTOPHONEPATH, "r");       // feedback to Device
-                    if(fpimg != NULL)
+          fp_uart = fopen(path, "r");
+          if(fp_uart != NULL)
+          {
+              #if DBG_EN
+                  printf("Open RxCommTmp file\n");
+              #endif
+              while(!feof(fp_uart))
+              {
+                  fread(filebuf, 1, FILESIZE, fp_uart);
+                  jobj = json_tokener_parse(filebuf);
+                  printf("filebuf to jobj string %s\n", json_object_to_json_string(jobj));
+                  checkstr = json_object_get_string(json_object_object_get(jobj, "type"));
+                  imgbuf = (unsigned char *)calloc(IMAGESIZE, sizeof(unsigned char));
+                  fpimg = fopen(SENDTOPHONEPATH, "r");       // feedback to Device
+                  if(fpimg != NULL)
+                  {
+                    while(!feof(fpimg))
                     {
-                        while(!feof(fpimg))
-                        {
-                            uart_write(fd, imgbuf, fread(imgbuf, 1, FILESIZE, fpimg));
-                        }
-                        if(strcmp(checkstr, "iOS") == 0)
-                        {
-                            uart_write(fd, IOSSUFFIX, strlen(IOSSUFFIX));
-                        }
-                        fclose(fpimg);
-                        free(imgbuf);
-                        break;
+                        uart_write(fd, imgbuf, fread(imgbuf, 1, FILESIZE, fpimg));
                     }
-                }
-            }
-            fclose(fp_uart);
+                    if(strcmp(checkstr, "iOS") == 0)
+                    {
+                        uart_write(fd, IOSSUFFIX, strlen(IOSSUFFIX));
+                    }
+                    fclose(fpimg);
+                    free(imgbuf);
+                    json_object_put(jobj);      // if new json object, After used must be free json object
+                    break;
+                  }
+              }
+              fclose(fp_uart);
+          }
         }
         return idx;
     }
@@ -456,58 +465,33 @@ int BTTransferUart(int fd, unsigned char *path, unsigned char *rxbuf, unsigned c
 
 int ChangBTName(unsigned char *path, unsigned char *rxbuf, unsigned char *filebuf)
 {
-    unsigned char LocalBTMac[17], CommBTMac[17];
+    unsigned char *LocalBTMac, *CommBTMac;
     unsigned char *NewBTName;
     int recct = 0;
     FILE *fp;
     int fd;
+    struct json_object *json_file;
 
+    LocalBTMac = (unsigned char *)calloc(20, sizeof(unsigned char));
+    CommBTMac = (unsigned char *)calloc(20, sizeof(unsigned char));
+    NewBTName = (unsigned char *)calloc(128, sizeof(unsigned char));
     memset(filebuf, 0, FILESIZE);
     memset(rxbuf, 0, UARTRXSIZE);
     // Read Local Bluetooth MAC address //
-    fp = fopen("/DaBai/HostDeviceInfo.json", "r");
-    if(fp != NULL)
-    {
-        fread(filebuf, 1, FILESIZE, fp);
-        filebuf = strstr(filebuf, "\"Bluetooth MAC Address\" : \"");
-        if(filebuf != NULL)
-        {
-            ReadJsonVal(filebuf + strlen("\"Bluetooth MAC Address\" : \""), LocalBTMac);
-            #if DBG_EN
-                printf("LocalBTMac is %s\n", LocalBTMac);
-            #endif
-        }
-        fclose(fp);
-    }
-
+    json_file = json_object_from_file("/DaBai/HostDeviceInfo.json");
+    #if DBG_EN
+        printf("josn file is %s\n", json_object_to_json_string(json_file));
+    #endif
+    LocalBTMac = json_object_get_string(json_object_object_get(json_file, "Bluetooth MAC Address"));
     memset(filebuf, 0, FILESIZE);
 
     // Read Command Bluetooth MAC address from Uart interface //
-    fp = fopen(path, "r");
-    NewBTName = (unsigned char *)calloc(128, sizeof(unsigned char));
-    if(fp != NULL)
-    {
-        fread(filebuf, 1, FILESIZE, fp);
-        filebuf = strstr(filebuf, "\"BTMac\":\"");
-        if(filebuf != NULL)
-        {
-            ReadJsonVal(filebuf + strlen("\"BTMac\":\""), CommBTMac);
-            #if DBG_EN
-                printf("CommBTMac is %s\n", CommBTMac);
-            #endif
-        }
-        rewind(fp);
-        fread(filebuf, 1, FILESIZE, fp);
-        filebuf = strstr(filebuf, "\"BTName\":\"");
-        if(filebuf != NULL)
-        {
-            ReadJsonVal(filebuf + strlen("\"BTName\":\""), NewBTName);
-            #if DBG_EN
-                printf("BTName is %s\n", NewBTName);
-            #endif
-        }
-        fclose(fp);
-    }
+    json_file = json_object_from_file(path);
+    #if DBG_EN
+        printf("josn file is %s\n", json_object_to_json_string(json_file));
+    #endif
+    CommBTMac = json_object_get_string(json_object_object_get(json_file, "BTMac"));
+    NewBTName = json_object_get_string(json_object_object_get(json_file, "BTName"));
 
     // compare Mac address //
     // if the same
@@ -547,5 +531,7 @@ int ChangBTName(unsigned char *path, unsigned char *rxbuf, unsigned char *filebu
         GetBTModuleName(BTMIDULEPATH, rxbuf, filebuf);
         BTModuleLeaveConfigMode(rxbuf);    // BT Module Leave Config Mode, into Normal Mode
     }
+    free(LocalBTMac);
+    free(CommBTMac);
     free(NewBTName);
 }
