@@ -324,56 +324,68 @@ int main(int argc, char *argv[])
                 printf("0x%02x]\n", SetEEprom[i]);
             }
             BTModuleReset();
-            while(1)
+            uart_write(fd, SetEEprom, sizeof(SetEEprom));
+            memset(rxbuf, 0, strlen(rxbuf));
+            recctmain = uart_read(fd, rxbuf);
+            // rxbuf --> 0x04 0x0e 0x04 0x01 0x27 0xfc 0x00 (Success)
+            if(recctmain >= 7)
             {
-              uart_write(fd, SetEEprom, sizeof(SetEEprom));
-              memset(rxbuf, 0, strlen(rxbuf));
-              recctmain = uart_read(fd, rxbuf);
-              // rxbuf --> 0x04 0x0e 0x04 0x01 0x27 0xfc 0x00 (Success)
-              if(recctmain >= 7)
+              printf("Receive Write Operation Pattern Delay Time value command [");
+              for(i=0;i<recctmain;i++)
+                printf("0x%02x ", rxbuf[i]);
+              printf("]\n");
+              if((rxbuf[0] == 0x04) && (rxbuf[3] == 0x01) && (rxbuf[4] == 0x27) && (rxbuf[6] == 0x00))
               {
-                printf("Receive Write Operation Pattern Delay Time value command [");
-                for(i=0;i<recctmain;i++)
-                  printf("0x%02x ", rxbuf[i]);
-                printf("]\n");
-                if((rxbuf[0] == 0x04) && (rxbuf[3] == 0x01) && (rxbuf[4] == 0x27) && (rxbuf[6] == 0x00))
+                printf("set eeprom Operation Pattern Delay Time val success~~!!!\n \
+                        ####################################\n \
+                        Reseting Bluetooth Module ~~!!!\n \
+                        ####################################\n");
+                BTModuleReset();
+                ReadEEpromCommand(GetEEprom, 0x038B, 1);
+                printf("After Setting~~~~~\nSend Read Operation Pattern Delay Time command [");
+                for(i=0;i<sizeof(GetEEprom);i++)
                 {
-                  printf("set eeprom Operation Pattern Delay Time val success~~!!!\n \
-                          ####################################\n \
-                          Reseting Bluetooth Module ~~!!!\n \
-                          ####################################\n");
-                  BTModuleReset();
-                  ReadEEpromCommand(GetEEprom, 0x038B, 1);
-                  printf("After Setting~~~~~\nSend Read Operation Pattern Delay Time command [");
-                  for(i=0;i<sizeof(GetEEprom);i++)
-                  {
-                    if(i < (sizeof(GetEEprom) - 1))
-                      printf("0x%02x ", GetEEprom[i]);
-                    else
-                      printf("0x%02x]\n", GetEEprom[i]);
-                  }
-                  while(1)
-                  {
-                    uart_write(fd, GetEEprom, sizeof(GetEEprom));
-                    recctmain = uart_read(fd, rxbuf);
-                    //printf("After setting //read eeprom recive count %d\n", recctmain);
-                    // rxbuf --> 0x04 0x0e 0x08 0x01 0x29 0xfc 0x00 0x00 0x31 0x01 0x00
-                    if(recctmain >= 1)
-                    {
-                      printf("After Setting~~~~~\nReceive read Operation Pattern Delay Time command [");
-                      for(i=0;i<recctmain;i++)
-                        printf("0x%02x ", rxbuf[i]);
-                      printf("]\n");
-                      exit(0);
-                    }
-                  }
+                  if(i < (sizeof(GetEEprom) - 1))
+                    printf("0x%02x ", GetEEprom[i]);
+                  else
+                    printf("0x%02x]\n", GetEEprom[i]);
+                }
+                uart_write(fd, GetEEprom, sizeof(GetEEprom));
+                recctmain = uart_read(fd, rxbuf);
+                //printf("After setting //read eeprom recive count %d\n", recctmain);
+                // rxbuf --> 0x04 0x0e 0x08 0x01 0x29 0xfc 0x00 0x00 0x31 0x01 0x00
+                if(recctmain >= 1)
+                {
+                  printf("After Setting~~~~~\nReceive read Operation Pattern Delay Time command [");
+                  for(i=0;i<recctmain;i++)
+                    printf("0x%02x ", rxbuf[i]);
+                  printf("]\n");
+                  exit(0);
                 }
               }
-              sleep(5);
+              else
+              {
+                printf("Read operation pattern from eeprom, and receive data is not correct~!");
+                exit(0);
+              }
+            }
+            else
+            {
+              printf("After Setting Operation pattern command, there is not receive any data !!!!!!!!!!\n");
+              exit(0);
             }
           }
+          else
+          {
+            printf("The New Operation pattern Delay Time Value is the same with EEProm Value !!!!!!!!!!\n");
+            exit(0);
+          }
         }
-        sleep(5);
+        else
+        {
+          printf("There is not receive any data~~~~~!!!!!");
+          exit(0);
+        }
       }
       else if(strcmp("eeprom", argv[1]) == 0)
       {
