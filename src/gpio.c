@@ -125,7 +125,7 @@ int GpioIOInitial(int num, int mode, int val)
 	send_command(command, resulte, sizeof(resulte));
 	val_temp = strtoul(resulte + 2, NULL, 16);
 	if((val_temp & (1 << mod_v)) != (reg_val & (1 << mod_v))) {
-    printf("Check Mode Error!!!!!\n val_temp : 0x%x, reg_val : 0x%x\n", val_temp, reg_val);
+    DBGGPIO("Check Mode Error!!!!!\n val_temp : 0x%x, reg_val : 0x%x\n", val_temp, reg_val);
 		return ERR_GPIO_MODE;
 	}
 
@@ -157,7 +157,7 @@ int GpioIOInitial(int num, int mode, int val)
 		send_command(command, resulte, sizeof(resulte));
 		val_temp = strtoul(resulte + 2, NULL, 16);
   	if((val_temp & (1 << mod_v)) != (reg_val & (1 << mod_v))) {
-  		printf("Check Value Error!!!!!\n val_temp : 0x%x, reg_val : 0x%x\n", val_temp, reg_val);
+  		DBGGPIO("Check Value Error!!!!!\n val_temp : 0x%x, reg_val : 0x%x\n", val_temp, reg_val);
 			return ERR_GPIO_VAL;
 		}
 	}
@@ -171,21 +171,21 @@ void GpioPinMode(void)
 
 	ret = GpioIOInitial(GPIO_USB1PWR_NUM, DIRECT_OUT, 1);
 	if(ret) {
-		printf("Gpio USB1PWR initial faild!!! Error Code : %d\n", ret);
+		DBGGPIO("Gpio USB1PWR initial faild!!! Error Code : %d\n", ret);
 	}
 
 	ret = GpioIOInitial(GPIO_USB2PWR_NUM, DIRECT_OUT, 1);
 	if(ret) {
-		printf("Gpio USB2PWR initial faild!!! Error Code : %d\n", ret);
+		DBGGPIO("Gpio USB2PWR initial faild!!! Error Code : %d\n", ret);
 	}
 
 	ret = GpioIOInitial(GPIO_WCEN_NUM, DIRECT_OUT, 1);
 	if(ret) {
-		printf("Gpio WCEN initial faild!!! Error Code : %d\n", ret);
+		DBGGPIO("Gpio WCEN initial faild!!! Error Code : %d\n", ret);
 	}
 
 	ret = GpioIOInitial(GPIO_WCRDY_NUM, DIRECT_IN, 0);
 	if(ret) {
-		printf("Gpio WCRDY initial faild!!! Error Code : %d\n", ret);
+		DBGGPIO("Gpio WCRDY initial faild!!! Error Code : %d\n", ret);
 	}
 }

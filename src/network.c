@@ -1,7 +1,5 @@
 #include "dabai.h"
 
-#define DBG_EN 0
-
 int GetDeviceMACAddr(unsigned char *path, unsigned char *filebuf)
 {
     unsigned char Strbuf[32];
@@ -24,16 +22,14 @@ int GetDeviceMACAddr(unsigned char *path, unsigned char *filebuf)
             {
                 filebuf = strchr(filebuf, '\'');
                 strncpy(macaddr, filebuf + 1, 17);
-                #if DBG_EN
-                    printf("Network MAC Address is : %s\n", macaddr);
-                #endif
+                DBGNET("Network MAC Address is : %s\n", macaddr);
                 break;
             }
         }
         fclose(fp);
     }
     json_file = json_object_from_file(path);
-    printf("josn file is %s\n", json_object_to_json_string(json_file));
+    DBGNET("josn file is %s\n", json_object_to_json_string(json_file));
     EthAddrStr = (unsigned char *)calloc(128, sizeof(unsigned char));
 
     sprintf(EthAddrStr, "%s", macaddr);

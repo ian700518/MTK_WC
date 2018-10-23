@@ -45,29 +45,29 @@ int main(int argc, char *argv[])
     reg = 0;
 
     // add check argv, if argv[1] is eeprom. It will be set baudrate value, and baudrate value from argv[2]
-    printf("argc is %d, argv is \"", argc);
+    DBGMSG("argc is %d, argv is \"", argc);
     for(i=0;i<argc;i++)
     {
       if(i < argc - 1)
-        printf("%s ", argv[i]);
+        DBGMSG("%s ", argv[i]);
       else
-        printf("%s\"\n", argv[i]);
+        DBGMSG("%s\"\n", argv[i]);
     }
     send_command("devmem 0x10000c24 32 0x00000003", NULL, 0);        // Set Uart0 HighSpeed to 1, and real uart0 baudrate will used 115200
     PinSetForBMModule();
     if(argc > 1)
     {
       BTEEPROM_MODE = 1;
-      printf("BT Module into EEprom Mode~~!!\ncommand is \"");
+      DBGMSG("BT Module into EEprom Mode~~!!\ncommand is \"");
       fd = uart_initial(DEV_UART, BAUDRATE, DATABIT, PARITY, STOPBIT);
       if(fd < 0)
           return -1;
       for(i=0;i<argc;i++)
       {
         if(i < (argc - 1))
-          printf("%s ", argv[i]);
+          DBGMSG("%s ", argv[i]);
         else
-          printf("%s\"\n", argv[i]);
+          DBGMSG("%s\"\n", argv[i]);
       }
       memset(SetEEVal, 0, sizeof(SetEEVal));
       memset(GetEEprom, 0, sizeof(GetEEprom));
@@ -82,29 +82,29 @@ int main(int argc, char *argv[])
           if(eeprom_brc == BaudRateList[i])
           {
             BRC = BRSValue[i];
-            printf("BRC is %d\n", BRC);
+            DBGMSG("BRC is %d\n", BRC);
             break;
           }
         }
         ReadEEpromCommand(GetEEprom, 0x0031, 1);
         // first read eeprom buf for baudrate
         uart_write(fd, GetEEprom, sizeof(GetEEprom));
-        printf("Send read orginal eeprom value command [");
+        DBGMSG("Send read orginal eeprom value command [");
         for(i=0;i<sizeof(GetEEprom);i++)
         {
           if(i < (sizeof(GetEEprom) - 1))
-            printf("0x%02x ", GetEEprom[i]);
+            DBGMSG("0x%02x ", GetEEprom[i]);
           else
-            printf("0x%02x]\n", GetEEprom[i]);
+            DBGMSG("0x%02x]\n", GetEEprom[i]);
         }
         recctmain = uart_read(fd, rxbuf);
         // rxbuf --> 0x04 0x0e 0x08 0x01 0x29 0xfc 0x00 0x00 0x31 0x01 0x04
         if(recctmain >= 11)
         {
-          printf("Receive read orginal eeprom value command [");
+          DBGMSG("Receive read orginal eeprom value command [");
           for(i=0;i<recctmain;i++)
-            printf("0x%02x ", rxbuf[i]);
-          printf("]\n");
+            DBGMSG("0x%02x ", rxbuf[i]);
+          DBGMSG("]\n");
           if((rxbuf[0] == 0x04) && (rxbuf[3] == 0x01) && (rxbuf[4] == 0x29) && (rxbuf[5] == 0xfc) && (rxbuf[6] == 0x00))
           {
             if((rxbuf[10] != BRC) && BRC != 0)
@@ -112,13 +112,13 @@ int main(int argc, char *argv[])
               SetEEVal[0] = BRC;
               WriteEEpromCommand(SetEEprom, 0x0031, 1, SetEEVal);
               //MadeSBRComm(SetBRComm, BRC);
-              printf("Send Write eeprom value command [");
+              DBGMSG("Send Write eeprom value command [");
               for(i=0;i<sizeof(SetEEprom);i++)
               {
                 if(i < (sizeof(SetEEprom) - 1))
-                  printf("0x%02x ", SetEEprom[i]);
+                  DBGMSG("0x%02x ", SetEEprom[i]);
                 else
-                  printf("0x%02x]\n", SetEEprom[i]);
+                  DBGMSG("0x%02x]\n", SetEEprom[i]);
               }
               BTModuleReset();
               uart_write(fd, SetEEprom, sizeof(SetEEprom));
@@ -127,61 +127,61 @@ int main(int argc, char *argv[])
               // rxbuf --> 0x04 0x0e 0x04 0x01 0x27 0xfc 0x00 (Success)
               if(recctmain >= 7)
               {
-                printf("Receive Write eeprom value command [");
+                DBGMSG("Receive Write eeprom value command [");
                 for(i=0;i<recctmain;i++)
-                  printf("0x%02x ", rxbuf[i]);
-                printf("]\n");
+                  DBGMSG("0x%02x ", rxbuf[i]);
+                DBGMSG("]\n");
                 if((rxbuf[0] == 0x04) && (rxbuf[3] == 0x01) && (rxbuf[4] == 0x27) && (rxbuf[6] == 0x00))
                 {
-                  printf("set eeprom baudrate val success~~!!!\n \
+                  DBGMSG("set eeprom baudrate val success~~!!!\n \
                           ====================================\n \
                           == Reseting Bluetooth Module ~~!! ==\n \
                           ====================================\n");
 
                   BTModuleReset();
                   ReadEEpromCommand(GetEEprom, 0x0031, 1);
-                  printf("After Setting~~~~~\nSend Read eeprom value command [");
+                  DBGMSG("After Setting~~~~~\nSend Read eeprom value command [");
                   for(i=0;i<sizeof(GetEEprom);i++)
                   {
                     if(i < (sizeof(GetEEprom) - 1))
-                      printf("0x%02x ", GetEEprom[i]);
+                      DBGMSG("0x%02x ", GetEEprom[i]);
                     else
-                      printf("0x%02x]\n", GetEEprom[i]);
+                      DBGMSG("0x%02x]\n", GetEEprom[i]);
                   }
                   uart_write(fd, GetEEprom, sizeof(GetEEprom));
                   recctmain = uart_read(fd, rxbuf);
                   // rxbuf --> 0x04 0x0e 0x08 0x01 0x29 0xfc 0x00 0x00 0x31 0x01 0x00
                   if(recctmain >= 1)
                   {
-                    printf("After Setting~~~~~\nReceive read eeprom value command [");
+                    DBGMSG("After Setting~~~~~\nReceive read eeprom value command [");
                     for(i=0;i<recctmain;i++)
-                      printf("0x%02x ", rxbuf[i]);
-                    printf("]\n");
+                      DBGMSG("0x%02x ", rxbuf[i]);
+                    DBGMSG("]\n");
                     exit(0);
                   }
                 }
                 else
                 {
-                  printf("Read baudrate from eeprom, and receive data is not correct~!");
+                  DBGMSG("Read baudrate from eeprom, and receive data is not correct~!");
                   exit(0);
                 }
               }
               else
               {
-                printf("After Setting Baudrate command, there is not receive any data !!!!!!!!!!\n");
+                DBGMSG("After Setting Baudrate command, there is not receive any data !!!!!!!!!!\n");
                 exit(0);
               }
             }
             else
             {
-              printf("The New Baurdate Value is the same with EEProm Value !!!!!!!!!!\n");
+              DBGMSG("The New Baurdate Value is the same with EEProm Value !!!!!!!!!!\n");
               exit(0);
             }
           }
         }
         else
         {
-          printf("There is not receive any data~~~~~!!!!!");
+          DBGMSG("There is not receive any data~~~~~!!!!!");
           exit(0);
         }
       }
@@ -191,26 +191,26 @@ int main(int argc, char *argv[])
         //eeprom_op = atoi(argv[2]);
         ReadEEpromCommand(GetEEprom, 0x01B1, 1);
         uart_write(fd, GetEEprom, sizeof(GetEEprom));
-        printf("Send read Operation Pattern value command [");
+        DBGMSG("Send read Operation Pattern value command [");
         for(i=0;i<sizeof(GetEEprom);i++)
         {
           if(i < (sizeof(GetEEprom) - 1))
-            printf("0x%02x ", GetEEprom[i]);
+            DBGMSG("0x%02x ", GetEEprom[i]);
           else
-            printf("0x%02x]\n", GetEEprom[i]);
+            DBGMSG("0x%02x]\n", GetEEprom[i]);
         }
         recctmain = uart_read(fd, rxbuf);
         if(recctmain >= 11)
         {
           // rxbuf --> 0x04 0x0e 0x08 0x01 0x29 0xfc 0x00 0x01 0xB1 0x01 0x04
-          printf("Receive read Operation Pattern value command [");
+          DBGMSG("Receive read Operation Pattern value command [");
           for(i=0;i<recctmain;i++)
-            printf("0x%02x ", rxbuf[i]);
-          printf("]\n");
+            DBGMSG("0x%02x ", rxbuf[i]);
+          DBGMSG("]\n");
           if(rxbuf[10] & 0x04)
-            printf("Operation Pattern is Manual Mode\n");
+            DBGMSG("Operation Pattern is Manual Mode\n");
           else
-            printf("Operation Pattern is Auto Mode\n");
+            DBGMSG("Operation Pattern is Auto Mode\n");
           // write setting value to eeprom
           if(((rxbuf[10] & 0x04) >> 2) != (atoi(argv[2])))
           {
@@ -221,13 +221,13 @@ int main(int argc, char *argv[])
               SetEEVal[0] = rxbuf[10] | 0x04;
               //MadeSOPComm(SetOPComm, (rxbuf[10] | 0x04));
             WriteEEpromCommand(SetEEprom, 0x01B1, 1, SetEEVal);
-            printf("Send Write eeprom value command [");
+            DBGMSG("Send Write eeprom value command [");
             for(i=0;i<sizeof(SetEEprom);i++)
             {
               if(i < (sizeof(SetEEprom) - 1))
-                printf("0x%02x ", SetEEprom[i]);
+                DBGMSG("0x%02x ", SetEEprom[i]);
               else
-                printf("0x%02x]\n", SetEEprom[i]);
+                DBGMSG("0x%02x]\n", SetEEprom[i]);
             }
             BTModuleReset();
             uart_write(fd, SetEEprom, sizeof(SetEEprom));
@@ -236,60 +236,60 @@ int main(int argc, char *argv[])
             // rxbuf --> 0x04 0x0e 0x04 0x01 0x27 0xfc 0x00 (Success)
             if(recctmain >= 7)
             {
-              printf("Receive Operation Pattern value command [");
+              DBGMSG("Receive Operation Pattern value command [");
               for(i=0;i<recctmain;i++)
-                printf("0x%02x ", rxbuf[i]);
-              printf("]\n");
+                DBGMSG("0x%02x ", rxbuf[i]);
+              DBGMSG("]\n");
               if((rxbuf[0] == 0x04) && (rxbuf[3] == 0x01) && (rxbuf[4] == 0x27) && (rxbuf[6] == 0x00))
               {
-                printf("set eeprom Operation Pattern val success~~!!!\n \
+                DBGMSG("set eeprom Operation Pattern val success~~!!!\n \
                         =============================================\n \
                         ====== Reseting Bluetooth Module ~~!!! ======\n \
                         =============================================\n");
                 BTModuleReset();
-                printf("After Setting~~~~~\nSend Read Operation Pattern command [");
+                DBGMSG("After Setting~~~~~\nSend Read Operation Pattern command [");
                 ReadEEpromCommand(GetEEprom, 0x01B1, 1);
                 for(i=0;i<sizeof(GetEEprom);i++)
                 {
                   if(i < (sizeof(GetEEprom) - 1))
-                    printf("0x%02x ", GetEEprom[i]);
+                    DBGMSG("0x%02x ", GetEEprom[i]);
                   else
-                    printf("0x%02x]\n", GetEEprom[i]);
+                    DBGMSG("0x%02x]\n", GetEEprom[i]);
                 }
                 uart_write(fd, GetEEprom, sizeof(GetEEprom));
                 recctmain = uart_read(fd, rxbuf);
-                //printf("After setting //read eeprom recive count %d\n", recctmain);
+                //DBGMSG("After setting //read eeprom recive count %d\n", recctmain);
                 // rxbuf --> 0x04 0x0e 0x08 0x01 0x29 0xfc 0x00 0x00 0x31 0x01 0x00
                 if(recctmain >= 1)
                 {
-                  printf("After Setting~~~~~\nReceive read Operation Pattern command [");
+                  DBGMSG("After Setting~~~~~\nReceive read Operation Pattern command [");
                   for(i=0;i<recctmain;i++)
-                    printf("0x%02x ", rxbuf[i]);
-                  printf("]\n");
+                    DBGMSG("0x%02x ", rxbuf[i]);
+                  DBGMSG("]\n");
                   exit(0);
                 }
               }
               else
               {
-                printf("Read operation pattern from eeprom, and receive data is not correct~!");
+                DBGMSG("Read operation pattern from eeprom, and receive data is not correct~!");
                 exit(0);
               }
             }
             else
             {
-              printf("After Setting Operation pattern command, there is not receive any data !!!!!!!!!!\n");
+              DBGMSG("After Setting Operation pattern command, there is not receive any data !!!!!!!!!!\n");
               exit(0);
             }
           }
           else
           {
-            printf("The New Operation pattern Value is the same with EEProm Value !!!!!!!!!!\n");
+            DBGMSG("The New Operation pattern Value is the same with EEProm Value !!!!!!!!!!\n");
             exit(0);
           }
         }
         else
         {
-          printf("There is not receive any data~~~~~!!!!!");
+          DBGMSG("There is not receive any data~~~~~!!!!!");
           exit(0);
         }
       }
@@ -298,36 +298,36 @@ int main(int argc, char *argv[])
         // get Pattern delay time
         ReadEEpromCommand(GetEEprom, 0x038B, 1);
         uart_write(fd, GetEEprom, sizeof(GetEEprom));
-        printf("Send read Operation Pattern Delay Time value command [");
+        DBGMSG("Send read Operation Pattern Delay Time value command [");
         for(i=0;i<sizeof(GetEEprom);i++)
         {
           if(i < (sizeof(GetEEprom) - 1))
-            printf("0x%02x ", GetEEprom[i]);
+            DBGMSG("0x%02x ", GetEEprom[i]);
           else
-            printf("0x%02x]\n", GetEEprom[i]);
+            DBGMSG("0x%02x]\n", GetEEprom[i]);
         }
         recctmain = uart_read(fd, rxbuf);
         if(recctmain >= 11)
         {
           // rxbuf --> 0x04 0x0e 0x08 0x01 0x29 0xfc 0x00 0x01 0xB1 0x01 0x04
-          printf("Receive read Operation Pattern Delay Time value command [");
+          DBGMSG("Receive read Operation Pattern Delay Time value command [");
           for(i=0;i<recctmain;i++)
-            printf("0x%02x ", rxbuf[i]);
-          printf("]\n");
-          printf("Operation Pattern Delay Time is %02x\n", rxbuf[10]);
+            DBGMSG("0x%02x ", rxbuf[i]);
+          DBGMSG("]\n");
+          DBGMSG("Operation Pattern Delay Time is %02x\n", rxbuf[10]);
           // write setting value to eeprom
           if(rxbuf[10] != (atoi(argv[2])))
           {
             SetEEVal[0] = atoi(argv[2]);
             WriteEEpromCommand(SetEEprom, 0x038B, 1, SetEEVal);
             //MadeSOPTComm(SetOPTComm, (atoi(argv[2])));
-            printf("Send Write Opteration Pattern Delay Time value command [");
+            DBGMSG("Send Write Opteration Pattern Delay Time value command [");
             for(i=0;i<sizeof(SetEEprom);i++)
             {
               if(i < (sizeof(SetEEprom) - 1))
-                printf("0x%02x ", SetEEprom[i]);
+                DBGMSG("0x%02x ", SetEEprom[i]);
               else
-                printf("0x%02x]\n", SetEEprom[i]);
+                DBGMSG("0x%02x]\n", SetEEprom[i]);
             }
             BTModuleReset();
             uart_write(fd, SetEEprom, sizeof(SetEEprom));
@@ -336,60 +336,60 @@ int main(int argc, char *argv[])
             // rxbuf --> 0x04 0x0e 0x04 0x01 0x27 0xfc 0x00 (Success)
             if(recctmain >= 7)
             {
-              printf("Receive Write Operation Pattern Delay Time value command [");
+              DBGMSG("Receive Write Operation Pattern Delay Time value command [");
               for(i=0;i<recctmain;i++)
-                printf("0x%02x ", rxbuf[i]);
-              printf("]\n");
+                DBGMSG("0x%02x ", rxbuf[i]);
+              DBGMSG("]\n");
               if((rxbuf[0] == 0x04) && (rxbuf[3] == 0x01) && (rxbuf[4] == 0x27) && (rxbuf[6] == 0x00))
               {
-                printf("set eeprom Operation Pattern Delay Time val success~~!!!\n \
+                DBGMSG("set eeprom Operation Pattern Delay Time val success~~!!!\n \
                         ========================================================\n \
                         ============ Reseting Bluetooth Module ~~!! ============\n \
                         ========================================================\n");
                 BTModuleReset();
                 ReadEEpromCommand(GetEEprom, 0x038B, 1);
-                printf("After Setting~~~~~\nSend Read Operation Pattern Delay Time command [");
+                DBGMSG("After Setting~~~~~\nSend Read Operation Pattern Delay Time command [");
                 for(i=0;i<sizeof(GetEEprom);i++)
                 {
                   if(i < (sizeof(GetEEprom) - 1))
-                    printf("0x%02x ", GetEEprom[i]);
+                    DBGMSG("0x%02x ", GetEEprom[i]);
                   else
-                    printf("0x%02x]\n", GetEEprom[i]);
+                    DBGMSG("0x%02x]\n", GetEEprom[i]);
                 }
                 uart_write(fd, GetEEprom, sizeof(GetEEprom));
                 recctmain = uart_read(fd, rxbuf);
-                //printf("After setting //read eeprom recive count %d\n", recctmain);
+                //DBGMSG("After setting //read eeprom recive count %d\n", recctmain);
                 // rxbuf --> 0x04 0x0e 0x08 0x01 0x29 0xfc 0x00 0x00 0x31 0x01 0x00
                 if(recctmain >= 1)
                 {
-                  printf("After Setting~~~~~\nReceive read Operation Pattern Delay Time command [");
+                  DBGMSG("After Setting~~~~~\nReceive read Operation Pattern Delay Time command [");
                   for(i=0;i<recctmain;i++)
-                    printf("0x%02x ", rxbuf[i]);
-                  printf("]\n");
+                    DBGMSG("0x%02x ", rxbuf[i]);
+                  DBGMSG("]\n");
                   exit(0);
                 }
               }
               else
               {
-                printf("Read operation pattern from eeprom, and receive data is not correct~!");
+                DBGMSG("Read operation pattern from eeprom, and receive data is not correct~!");
                 exit(0);
               }
             }
             else
             {
-              printf("After Setting Operation pattern command, there is not receive any data !!!!!!!!!!\n");
+              DBGMSG("After Setting Operation pattern command, there is not receive any data !!!!!!!!!!\n");
               exit(0);
             }
           }
           else
           {
-            printf("The New Operation pattern Delay Time Value is the same with EEProm Value !!!!!!!!!!\n");
+            DBGMSG("The New Operation pattern Delay Time Value is the same with EEProm Value !!!!!!!!!!\n");
             exit(0);
           }
         }
         else
         {
-          printf("There is not receive any data~~~~~!!!!!");
+          DBGMSG("There is not receive any data~~~~~!!!!!");
           exit(0);
         }
       }
@@ -400,29 +400,29 @@ int main(int argc, char *argv[])
         else
           ReadEEpromCommand(GetEEprom, 0x0000, 0x10);
         uart_write(fd, GetEEprom, sizeof(GetEEprom));
-        printf("Send Geteeprom command : [");
+        DBGMSG("Send Geteeprom command : [");
         for(i=0;i<sizeof(GetEEprom);i++)
         {
           if(i < (sizeof(GetEEprom) - 1))
-            printf("0x%02x ", GetEEprom[i]);
+            DBGMSG("0x%02x ", GetEEprom[i]);
           else
-            printf("0x%02x]\n", GetEEprom[i]);
+            DBGMSG("0x%02x]\n", GetEEprom[i]);
         }
         recctmain = uart_read(fd, rxbuf);
         if(recctmain >= 11)
         {
-          printf("EEprom value is [");
+          DBGMSG("EEprom value is [");
           for(i=10,j=0;i<recctmain;i++,j++)
           {
             if(i < (recctmain - 1))
             {
               if(j==8)
-                printf("\t");
-              printf("%02x ", rxbuf[i]);
+                DBGMSG("\t");
+              DBGMSG("%02x ", rxbuf[i]);
             }
             else
             {
-              printf("%02x]\n", rxbuf[i]);
+              DBGMSG("%02x]\n", rxbuf[i]);
             }
           }
         }
@@ -448,22 +448,22 @@ int main(int argc, char *argv[])
               break;
           }
           uart_write(fd, GetEEprom, sizeof(GetEEprom));
-          printf("Send read Device Name value command [");
+          DBGMSG("Send read Device Name value command [");
           for(i=0;i<sizeof(GetEEprom);i++)
           {
             if(i < (sizeof(GetEEprom) - 1))
-              printf("0x%02x ", GetEEprom[i]);
+              DBGMSG("0x%02x ", GetEEprom[i]);
             else
-              printf("0x%02x]\n", GetEEprom[i]);
+              DBGMSG("0x%02x]\n", GetEEprom[i]);
           }
           recctmain = uart_read(fd, rxbuf);
           if(recctmain >= 11)
           {
             // rxbuf --> 0x04 0x0e 0x08 0x01 0x29 0xfc 0x00 0x00 0x0B 0x20 0x04 ... ... ... ...
-            printf("Receive read Device Name value command [");
+            DBGMSG("Receive read Device Name value command [");
             for(i=0;i<recctmain;i++)
-              printf("0x%02x ", rxbuf[i]);
-            printf("]\n");
+              DBGMSG("0x%02x ", rxbuf[i]);
+            DBGMSG("]\n");
           }
           sleep(5);
           if(i>=4)
@@ -477,7 +477,7 @@ int main(int argc, char *argv[])
     else
     {
       BTEEPROM_MODE = 1;
-      printf("BT Module into Normal Mode~~!!\n command is \"%s\", parameter is %d\n", argv[0], argc);
+      DBGMSG("BT Module into Normal Mode~~!!\n command is \"%s\", parameter is %d\n", argv[0], argc);
       PinSetForBMModule();
       ////GetBTConfigFlag = 0;
       ////BTIntoConfigMode = 0;
@@ -489,7 +489,7 @@ int main(int argc, char *argv[])
       ////  if(recctmain > 0)
       ////  {
       ////    for(i=0;i<recctmain;i++)
-      ////      printf("rxbuf[%d] is : 0x%x\n", i, rxbuf[i]);
+      ////      DBGMSG("rxbuf[%d] is : 0x%x\n", i, rxbuf[i]);
       ////    if((rxbuf[0] == 0xAA) && (rxbuf[3] == 0x8F) && (rxbuf[4] == 0x01))
       ////    {
       ////        memset(rxbuf, 0, strlen(rxbuf));
@@ -504,15 +504,15 @@ int main(int argc, char *argv[])
       SetBMModuleMode(normal_mode);
       GetDeviceMACAddr(BTMIDULEPATH, filebuf);   // Get Device Network MAC address
       GpioPinMode();
-      printf("Host Device Data finishi~~~!!!\n");
+      DBGMSG("Host Device Data finishi~~~!!!\n");
       //GetBTConfigFlag = 1;
       fd = uart_initial(DEV_UART, BAUDRATE, DATABIT, PARITY, STOPBIT);
       if(fd < 0)
       {
-          printf("Uart open error~~~!!!\n");
+          DBGMSG("Uart open error~~~!!!\n");
           return -1;
       }
-      printf("Dabai process starting~~~!!!\n");
+      DBGMSG("Dabai process starting~~~!!!\n");
 
       /*
         first :  clear ChargeDevice array.
@@ -529,7 +529,7 @@ int main(int argc, char *argv[])
       Sockarg->Addr = "192.168.100.100";
       Sockarg->Port = 12345;
 
-      printf("before pthread_create~~~~~~~\n");
+      DBGMSG("before pthread_create~~~~~~~\n");
       pthread_create(&thrid, NULL, SockConnProcess, (void *)Sockarg);
 
       // for test chage list
@@ -564,13 +564,13 @@ int main(int argc, char *argv[])
               fd = uart_initial(DEV_UART, BAUDRATE, DATABIT, PARITY, STOPBIT);
               if(fd < 0)
               {
-                  printf("Uart open error~~~!!!\n");
+                  DBGMSG("Uart open error~~~!!!\n");
                   //return -1;
               }
               break;
 
             default:
-              //printf("Uart receive format is error\n");
+              //DBGMSG("Uart receive format is error\n");
               break;
         }
         // for test charge List
@@ -582,7 +582,7 @@ int main(int argc, char *argv[])
           {
             if((strcmp((ChargeDevice+i)->DevUserId, "Demo001") == 0) || (strcmp((ChargeDevice+i)->DevUserId, "Demo002") == 0) || (strcmp((ChargeDevice+i)->DevUserId, "Demo005") == 0))
             {
-              printf("DevUserId is %s\n", (ChargeDevice+i)->DevUserId);
+              DBGMSG("DevUserId is %s\n", (ChargeDevice+i)->DevUserId);
               ChargeDevice[i].CurrentTime = Current_sec;
             }
           }
@@ -590,7 +590,7 @@ int main(int argc, char *argv[])
           {
             if((strcmp((ChargeDevice+i)->DevUserId, "Demo002") == 0) || (strcmp((ChargeDevice+i)->DevUserId, "Demo005") == 0))
             {
-              printf("DevUserId is %s\n", (ChargeDevice+i)->DevUserId);
+              DBGMSG("DevUserId is %s\n", (ChargeDevice+i)->DevUserId);
               ChargeDevice[i].CurrentTime = Current_sec;
             }
           }
@@ -598,7 +598,7 @@ int main(int argc, char *argv[])
           {
             if((strcmp((ChargeDevice+i)->DevUserId, "Demo005") == 0))
             {
-              printf("DevUserId is %s\n", (ChargeDevice+i)->DevUserId);
+              DBGMSG("DevUserId is %s\n", (ChargeDevice+i)->DevUserId);
               ChargeDevice[i].CurrentTime = Current_sec;
             }
           }
@@ -611,7 +611,7 @@ int main(int argc, char *argv[])
           ChargeDeviceCount = UpdateChgDevice(ChargeDevice, CDVTemp, filebuf);
           if(ChargeDeviceCount == 0)
             SetGpioVal(GPIO_WCEN_NUM, 0);
-          printf("ChargeDeviceCount is %d\n", ChargeDeviceCount);
+          DBGMSG("ChargeDeviceCount is %d\n", ChargeDeviceCount);
         }
 
         /*

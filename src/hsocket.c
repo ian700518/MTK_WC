@@ -8,8 +8,6 @@
 #include <netdb.h>
 #include "dabai.h"
 
-#define DBG_EN 0
-
 int Connect2Ser(char *HostAddr, int HostPort)
 {
     struct sockaddr_in server;
@@ -37,32 +35,22 @@ int Connect2Ser(char *HostAddr, int HostPort)
     ret = getaddrinfo(HostAddr, NULL, NULL, &result);
     if(ret != 0)
     {
-      #if DBG_EN
-          printf("Get host name error~~~!!!!\n");
-      #endif
+      DBGSK("Get host name error~~~!!!!\n");
       return -1;
     }
     switch(result->ai_family)
     {
         case AF_UNSPEC:
-            #if DBG_EN
-                printf("Unspecified\n");
-            #endif
+            DBGSK("Unspecified\n");
             break;
         case AF_INET:
-            #if DBG_EN
-                printf("AF_INET (IPv4)\n");
-            #endif
+            DBGSK("AF_INET (IPv4)\n");
             sockaddr_ipv4 = (struct sockaddr_in *)result->ai_addr;
-            #if DBG_EN
-                printf("\tIPv4 address %s\n", inet_ntoa(sockaddr_ipv4->sin_addr));
-            #endif
+            DBGSK("\tIPv4 address %s\n", inet_ntoa(sockaddr_ipv4->sin_addr));
             inet_pton(AF_INET, inet_ntoa(sockaddr_ipv4->sin_addr), &server.sin_addr.s_addr);
             break;
         case AF_INET6:
-            #if DBG_EN
-                printf("AF_INET6 (IPv6)\n");
-            #endif
+            DBGSK("AF_INET6 (IPv6)\n");
             /*
             // the InetNtop function is available on Windows Vista and later
             // sockaddr_ipv6 = (struct sockaddr_in6 *) ptr->ai_addr;
@@ -83,23 +71,17 @@ int Connect2Ser(char *HostAddr, int HostPort)
                 */
             break;
         default:
-            #if DBG_EN
-                printf("Other %ld\n", result->ai_family);
-            #endif
+            DBGSK("Other %ld\n", result->ai_family);
             break;
     }
 
 
-    #if DBG_EN
-        printf("serve ip is %s\n", inet_ntoa(server.sin_addr));
-    #endif
+    DBGSK("serve ip is %s\n", inet_ntoa(server.sin_addr));
     /* 與 server 端連線 */
     ret = connect(sock, (struct sockaddr *)&server, sizeof(server));
     if(ret < 0)
     {
-      #if DBG_EN
-          printf("connect error : %d\n", ret);
-      #endif
+      DBGSK("connect error : %d\n", ret);
       return 0;
     }
 
@@ -114,9 +96,7 @@ int Connect2Ser(char *HostAddr, int HostPort)
         fread(Fbuf, 1, FILESIZE, fp_sock);
       }
       sendfilesize = ftell(fp_sock);
-      #if DBG_EN
-          printf("Fbuf is %s, file length is %d\n", Fbuf, sendfilesize);
-      #endif
+      DBGSK("Fbuf is %s, file length is %d\n", Fbuf, sendfilesize);
       fclose(fp_sock);
     }
     while(1)
@@ -128,16 +108,12 @@ int Connect2Ser(char *HostAddr, int HostPort)
       ret = select(sock+1, &readfd, NULL, NULL, &timeout);
       if(ret < 0)
       {
-        #if DBG_EN
-            printf("select function error~~!!(In Sockeet)\n");
-        #endif
+        DBGSK("select function error~~!!(In Sockeet)\n");
         break;
       }
       else if(ret == 0)
       {
-        #if DBG_EN
-            printf("select function timeout~~!!(In Socket)\n");
-        #endif
+        DBGSK("select function timeout~~!!(In Socket)\n");
         break;
       }
       else
@@ -147,16 +123,12 @@ int Connect2Ser(char *HostAddr, int HostPort)
           n = read(sock, buf, sizeof(buf));
           if(n>0)
           {
-            #if DBG_EN
-                printf("\t[Info] Receive %d bytes: %s\n", n, buf);
-            #endif
+            DBGSK("\t[Info] Receive %d bytes: %s\n", n, buf);
             while(write_num < sendfilesize)
             {
               write_num = write(sock, Fbuf, sendfilesize);
             }
-            #if DBG_EN
-                printf("\t[Info] Transfer %d bytes: %s\n", write_num, Fbuf);
-            #endif
+            DBGSK("\t[Info] Transfer %d bytes: %s\n", write_num, Fbuf);
           }
           break;
         }
@@ -177,14 +149,12 @@ void *SockConnProcess(void *arg)
   struct SocketPara *Sockarg;
   Sockarg = (struct SocketPara *)arg;
 
-  printf("into SockConnProcess ~~~!!!\n");
+  DBGSK("into SockConnProcess ~~~!!!\n");
   //if(fork() == 0)
   //{
     //if(fork() == 0)
     //{
-      #if DBG_EN
-          printf("First print Nameaddr Sockarg->Addr '%s', Sockarg->Port '%d'\n", Sockarg->Addr, Sockarg->Port);
-      #endif
+      DBGSK("First print Nameaddr Sockarg->Addr '%s', Sockarg->Port '%d'\n", Sockarg->Addr, Sockarg->Port);
       while(1)
       {
         Connect2Ser(Sockarg->Addr, Sockarg->Port);

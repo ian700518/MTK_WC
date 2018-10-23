@@ -11,6 +11,61 @@
 #include <signal.h>
 #include <json-c/json.h>
 
+// for dabai.c
+#define DEBUG 1
+#if (DEBUG)
+  #define DBGMSG(...) printf(__VA_ARGS__)
+#else
+  #define DBGMSG(...)
+#endif
+
+// for gpio.c
+#define DEBUG_GPIO 1
+#if (DEBUG_GPIO)
+  #define DBGGPIO(...) printf(__VA_ARGS__)
+#else
+  #define DBGGPIO(...)
+#endif
+
+// for bluetooth.c
+#define DEBUG_BT 1
+#if (DEBUG_BT)
+  #define DBGBT(...) printf(__VA_ARGS__)
+#else
+  #define DBGBT(...)
+#endif
+
+// for hsocket.c
+#define DEBUG_SK 1
+#if (DEBUG_SK)
+  #define DBGSK(...) printf(__VA_ARGS__)
+#else
+  #define DBGSK(...)
+#endif
+
+// for network.c
+#define DEBUG_NET 1
+#if (DEBUG_NET)
+  #define DBGNET(...) printf(__VA_ARGS__)
+#else
+  #define DBGNET(...)
+#endif
+
+// for subproc.c
+#define DEBUG_SUB 1
+#if (DEBUG_SUB)
+  #define DBGSUB(...) printf(__VA_ARGS__)
+#else
+  #define DBGSUB(...)
+#endif
+
+// for uart.c
+#define DEBUG_UART 1
+#if (DEBUG_UART)
+  #define DBGUART(...) printf(__VA_ARGS__)
+#else
+  #define DBGUART(...)
+#endif
 //#define BM78SPP05MC2 1
 #define BM78SPP05NC2 1			// define Bluetooth module
 

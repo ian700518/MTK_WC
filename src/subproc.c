@@ -1,7 +1,5 @@
 #include "dabai.h"
 
-#define DBG_EN 1
-
 /*将字符串s中出现的字符c删除*/
 void squeeze(char s[],int c)
 {
@@ -26,7 +24,7 @@ void checkiOSMac(unsigned char *src, unsigned char *dest)
     unsigned char *buf;
 
     buf = strrchr(src, '-');
-    printf("buf is %s\n", buf);
+    DBGSUB("buf is %s\n", buf);
     for(i=0,j=0;i<12;i++,j++)
     {
         dest[j] = buf[i+1];
@@ -63,9 +61,7 @@ int WriteChgList(unsigned char *path, unsigned char *filebuf, struct ClientDev *
 
     //jobj_list = json_object_new_object();
     data = json_object_new_array();
-    #if DBG_EN
-        printf("into WriteChgList~~~!!\nChgDevCt is %d\n", ChgDevCt);
-    #endif
+    DBGSUB("into WriteChgList~~~!!\nChgDevCt is %d\n", ChgDevCt);
     for(i=0; i<ChgDevCt; i++)
     {
 
@@ -94,9 +90,7 @@ int WriteChgList(unsigned char *path, unsigned char *filebuf, struct ClientDev *
     length = json_object_array_length(data);
     if(length != 0)
       filebuf = json_object_to_json_string(data);
-    #if DBG_EN
-        printf("json file : %s\n", filebuf);
-    #endif
+    DBGSUB("json file : %s\n", filebuf);
     for(i=0;i<ChgDevCt;i++)
       json_object_put(jobj[i]);
     json_object_put(data);
@@ -149,26 +143,20 @@ int CheckCHGDevInfo(unsigned char *path, struct ClientDev *CDV, unsigned char *C
       if(CheckServerID("DaBai/RxCommTmp.txt", filebuf) == 0)
         return -1;
     }
-    #if DBG_EN
-        printf("filebuf to jobj string %s\n", json_object_to_json_string(jobj));
-        printf("json-c checkbuf : %d\n", checkbuf);
-    #endif
+    DBGSUB("filebuf to jobj string %s\n", json_object_to_json_string(jobj));
+    DBGSUB("json-c checkbuf : %d\n", checkbuf);
     time(&cur_time);
     info = localtime(&cur_time);
     for(i=0;i<(*ChgDevCt);i++)
     {
         if(strcmp(checkbuf, (CDV+i)->DevUserId) == 0)
         {
-            #if DBG_EN
-                printf("CDV->DevUserId is : %s\n", (CDV+i)->DevUserId);
-            #endif
+            DBGSUB("CDV->DevUserId is : %s\n", (CDV+i)->DevUserId);
             break;    // if the same userid in the charge list
         }
     }
-    #if DBG_EN
-        printf("Before ChargeDeviceCount is %d\n", ChargeDeviceCount);
-        printf("Before *ChgDevCt is %d\n", *ChgDevCt);
-    #endif
+    DBGSUB("Before ChargeDeviceCount is %d\n", ChargeDeviceCount);
+    DBGSUB("Before *ChgDevCt is %d\n", *ChgDevCt);
     if(i == (*ChgDevCt))    // no device mach within charge list or charge list is no device, and add the information into charge list
     {
         (CDV+i)->DevIdx = *ChgDevCt;
@@ -178,9 +166,7 @@ int CheckCHGDevInfo(unsigned char *path, struct ClientDev *CDV, unsigned char *C
         if(strcmp((CDV+i)->DevType, "iOS") == 0)
         {
           Macbuf = json_object_get_string(json_object_object_get(jobj, "mac"));
-          #if DBG_EN
-              printf("Macbuf is %s\n", Macbuf);
-          #endif
+          DBGSUB("Macbuf is %s\n", Macbuf);
           checkiOSMac(Macbuf, (CDV+i)->DevMac);
         }
         else if(strcmp((CDV+i)->DevType, "android") == 0)
@@ -191,17 +177,15 @@ int CheckCHGDevInfo(unsigned char *path, struct ClientDev *CDV, unsigned char *C
         (CDV+i)->CurrentTime = cur_time;
         strftime((CDV+i)->DevFormatSTime, 64, "%x - %X", info);
         strftime((CDV+i)->DevFormatCTime, 64, "%x - %X", info);
-        #if DBG_EN
-            printf("(CDV+%d)->DevIdx is : %d\n", i, (CDV+i)->DevIdx);
-            printf("(CDV+%d)->DevType is : %s\n", i, (CDV+i)->DevType);
-            printf("(CDV+%d)->DevUserId is : %s\n", i, (CDV+i)->DevUserId);
-            printf("(CDV+%d)->DevAccount is : %s\n", i, (CDV+i)->DevAccount);
-            printf("(CDV+%d)->DevMac is : %s\n", i, (CDV+i)->DevMac);
-            printf("(CDV+%d)->StartTime is : %d\n", i ,(CDV+i)->StartTime);
-            printf("(CDV+%d)->CurrentTime is : %d\n", i , (CDV+i)->CurrentTime);
-            printf("(CDV+%d)->DevFormatSTime is : %s\n", i, (CDV+i)->DevFormatSTime);
-            printf("(CDV+%d)->DevFormatCTime is : %s\n", i, (CDV+i)->DevFormatCTime);
-        #endif
+        DBGSUB("(CDV+%d)->DevIdx is : %d\n", i, (CDV+i)->DevIdx);
+        DBGSUB("(CDV+%d)->DevType is : %s\n", i, (CDV+i)->DevType);
+        DBGSUB("(CDV+%d)->DevUserId is : %s\n", i, (CDV+i)->DevUserId);
+        DBGSUB("(CDV+%d)->DevAccount is : %s\n", i, (CDV+i)->DevAccount);
+        DBGSUB("(CDV+%d)->DevMac is : %s\n", i, (CDV+i)->DevMac);
+        DBGSUB("(CDV+%d)->StartTime is : %d\n", i ,(CDV+i)->StartTime);
+        DBGSUB("(CDV+%d)->CurrentTime is : %d\n", i , (CDV+i)->CurrentTime);
+        DBGSUB("(CDV+%d)->DevFormatSTime is : %s\n", i, (CDV+i)->DevFormatSTime);
+        DBGSUB("(CDV+%d)->DevFormatCTime is : %s\n", i, (CDV+i)->DevFormatCTime);
         if(*ChgDevCt < CHGDEVMAX)
             (*ChgDevCt)++;
     }
@@ -210,10 +194,8 @@ int CheckCHGDevInfo(unsigned char *path, struct ClientDev *CDV, unsigned char *C
         (CDV+i)->CurrentTime = cur_time;
         strftime((CDV+i)->DevFormatCTime, 64, "%x - %X", info);
     }
-    #if DBG_EN
-        printf("After ChargeDeviceCount is %d\n", ChargeDeviceCount);
-        printf("After *ChgDevCt is %d\n", *ChgDevCt);
-    #endif
+    DBGSUB("After ChargeDeviceCount is %d\n", ChargeDeviceCount);
+    DBGSUB("After *ChgDevCt is %d\n", *ChgDevCt);
     json_object_put(jobj);      // if new json object, After used must be free json object
     WriteChgList(CHGLISTPATH, filebuf, CDV, *ChgDevCt);
 }
@@ -245,10 +227,10 @@ int GetChgDevFromFile(unsigned char *path, struct ClientDev *CDV)
     // not onlinechglist file, return 0~
     return 0;
   }
-  printf("onlinebuf is %s\n", Onlinebuf);
+  DBGSUB("onlinebuf is %s\n", Onlinebuf);
   jobj_online = json_tokener_parse(Onlinebuf);
   arraylen = json_object_array_length(jobj_online);
-  printf("arraylen is %d\n", arraylen);
+  DBGSUB("arraylen is %d\n", arraylen);
   if(arraylen > 0)
   {
     for(i=0;i<arraylen;i++)
@@ -267,9 +249,7 @@ int GetChgDevFromFile(unsigned char *path, struct ClientDev *CDV)
       (CDV+i)->RemainT_Min = json_object_get_int(json_object_object_get(jobj_value, "RemainT_Min"));
       (CDV+i)->ChgMode = json_object_get_int(json_object_object_get(jobj_value, "ChgMode"));
       onlinestr[i] = json_object_get_string(jobj_value);
-      #if DBG_EN
-          printf("list[%d] is %s\n", i, onlinestr[i]);
-      #endif
+      DBGSUB("list[%d] is %s\n", i, onlinestr[i]);
     }
     return arraylen;
   }
@@ -319,19 +299,15 @@ int CheckDemoID(unsigned char *path, unsigned char *filebuf)
     }
     jobj_Demo = json_tokener_parse(filebuf);
     arraylen = json_object_array_length(jobj_Demo);
-    #if DBG_EN
-        printf("arraylen is %d\n", arraylen);
-    #endif
+    DBGSUB("arraylen is %d\n", arraylen);
     for(i=0;i<arraylen;i++)
     {
       jobj_value = json_object_array_get_idx(jobj_Demo, i);
       DemoIdbuf = json_object_get_string(jobj_value);
-      #if DBG_EN
-          printf("DemoIdbuf is %s, RxIdbuf is %s\n", DemoIdbuf, RxIdbuf);
-      #endif
+      DBGSUB("DemoIdbuf is %s, RxIdbuf is %s\n", DemoIdbuf, RxIdbuf);
       if(strcmp(RxIdbuf, DemoIdbuf) == 0)
       {
-        printf("There will be set wireless enable~~!!");
+        DBGSUB("There will be set wireless enable~~!!");
         return 1;
       }
     }
@@ -389,9 +365,7 @@ int UpdateChgDevice(struct ClientDev *CDV, struct ClientDev *Tmp, unsigned char 
   }
   for(i=0;i<CHGDEVMAX;i++)
     memset(Tmp+i, 0, sizeof(struct ClientDev));
-  #if DBG_EN
-      printf("After update CHG List, CHG count is %d(j)\n", j);
-  #endif
+  DBGSUB("After update CHG List, CHG count is %d(j)\n", j);
   WriteChgList(CHGLISTPATH, filebuf, CDV, j);
   return j;
 }

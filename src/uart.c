@@ -32,14 +32,10 @@ int uart_initial(char *dev, int baudrate, int bits, int parity, int stopbits)
 
         // set 0x10000c0c bit7 to 1
         send_command("devmem 0x10000c0c", membuf, sizeof(membuf));
-        #if DBG_EN
-          printf("SET DLAB to 1 0x10000c0c value is %s\n", membuf);
-        #endif
+        DBGUART("SET DLAB to 1 0x10000c0c value is %s\n", membuf);
         reg = strtoul(membuf + 2, NULL, 16);
         reg |= 0x00000080;
-        #if DBG_EN
-          printf("SET DLAB to 1 0x10000c0c value is 0x%x\n", reg);
-        #endif
+        DBGUART("SET DLAB to 1 0x10000c0c value is 0x%x\n", reg);
         sprintf(membuf, "devmem 0x10000c0c 32 0x%08x", reg);
         send_command(membuf, NULL, 0);
 
@@ -50,9 +46,7 @@ int uart_initial(char *dev, int baudrate, int bits, int parity, int stopbits)
         send_command("devmem 0x10000c0c", membuf, sizeof(membuf));
         reg = strtoul(membuf + 2, NULL, 16);
         reg &= 0xFFFFFF7F;
-        #if DBG_EN
-          printf("SET DLAB to 0 0x10000c0c value is 0x%x\n", reg);
-        #endif
+        DBGUART("SET DLAB to 0 0x10000c0c value is 0x%x\n", reg);
         sprintf(membuf, "devmem 0x10000c0c 32 0x%08x", reg);
         send_command(membuf, NULL, 0);
 
@@ -75,7 +69,7 @@ int open_uart(char *dev)
         return fd;
     else
     {
-        perror("Can't Open Serial Port\n");
+        DBGUART("Can't Open Serial Port\n");
         return -1;
     }
 }
@@ -104,7 +98,7 @@ int set_speed(int fd, int speed)
              status = tcsetattr(fd, TCSANOW, &Opt);
              if(status != 0)
              {
-                perror("tcsetattr fd1");
+                DBGUART("tcsetattr fd1");
                 return -1;
              }
              tcflush(fd,TCIOFLUSH);
@@ -125,7 +119,7 @@ int set_Parity(int fd, int databits, int stopbits, int parity)
         struct termios options;
         if(tcgetattr(fd,&options) != 0)
         {
-            perror("SetupSerial 1");
+            DBGUART("SetupSerial 1");
             return -1;
         }
         options.c_cflag &= ~CSIZE;
@@ -190,7 +184,7 @@ int set_Parity(int fd, int databits, int stopbits, int parity)
         options.c_cc[VMIN] = 0; /* Update the options and do it NOW */
         if(tcsetattr(fd,TCSANOW,&options) != 0)
         {
-            perror("SetupSerial 3");
+            DBGUART("SetupSerial 3");
             return -1;
         }
         return 0;
@@ -211,7 +205,7 @@ int uart_read(int fd, unsigned char *buf)
         ret = select(fd + 1, &readfd, NULL, NULL, &timeout);
         if(ret < 0)
         {
-            printf("select function error\n");
+            DBGUART("select function error\n");
             ret = -1;
             break;
         }
@@ -219,17 +213,15 @@ int uart_read(int fd, unsigned char *buf)
         {
             if(readct > 0)
             {
-                #if DBG_EN
-                    printf("Uart Read buf[...](Hex) = [");
-                    for(i=0;i<readct;i++)
-                    {
-                      if(i<readct-1)
-                        printf("0x%02x ", buf[i]);
-                      else
-                        printf("0x%02x]\n", buf[i]);
-                    }
-                    printf("tty receive data finish!!!\n");
-                #endif
+                DBGUART("Uart Read buf[...](Hex) = [");
+                for(i=0;i<readct;i++)
+                {
+                  if(i<readct-1)
+                    DBGUART("0x%02x ", buf[i]);
+                  else
+                    DBGUART("0x%02x]\n", buf[i]);
+                }
+                DBGUART("tty receive data finish!!!\n");
                 ret = readct;
                 break;
             }
@@ -258,16 +250,14 @@ int uart_write(int fd, unsigned char *buf, unsigned long length)
     int nwrite;
     unsigned long i;
 
-    #if DBG_EN
-      printf("Uart Write buf[...](Hex) = [");
-      for(i = 0; i < length; i++)
-      {
-        if(i < length - 1)
-          printf("0x%02x ", buf[i]);
-        else
-          printf("0x%02x]\n", buf[i]);
-      }
-    #endif
+    DBGUART("Uart Write buf[...](Hex) = [");
+    for(i = 0; i < length; i++)
+    {
+      if(i < length - 1)
+        DBGUART("0x%02x ", buf[i]);
+      else
+        DBGUART("0x%02x]\n", buf[i]);
+    }
     nwrite = write(fd, buf, length);
     //printf("uart write buf : %s length : %d\n", buf, length);
     usleep(length * RW_BYTETIME);
