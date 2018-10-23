@@ -505,8 +505,6 @@ int main(int argc, char *argv[])
       GetDeviceMACAddr(BTMIDULEPATH, filebuf);   // Get Device Network MAC address
       GpioPinMode();
       printf("Host Device Data finishi~~~!!!\n");
-      time(&Current_sec);
-      Present_sec = Current_sec;
       //GetBTConfigFlag = 1;
       fd = uart_initial(DEV_UART, BAUDRATE, DATABIT, PARITY, STOPBIT);
       if(fd < 0)
@@ -525,7 +523,6 @@ int main(int argc, char *argv[])
       {
         memset(ChargeDevice+i, 0, sizeof(struct ClientDev));
       }
-      printf("GetChgDevFromFile\n");
       ChargeDeviceCount = GetChgDevFromFile("/DaBai/OnlineChgList.json", ChargeDevice);
 
       Sockarg = (struct SocketPara *)malloc(sizeof(struct SocketPara));
@@ -536,13 +533,16 @@ int main(int argc, char *argv[])
       pthread_create(&thrid, NULL, SockConnProcess, (void *)Sockarg);
 
       // for test chage list
+      #if 0
       for(i=0;i<CHGDEVMAX;i++)
       {
         time(&Current_sec);
         ChargeDevice[i].CurrentTime = Current_sec;
       }
-      Present_sec = Current_sec;
+      #endif
       // for test chage list
+      time(&Current_sec);
+      Present_sec = Current_sec;
       while(1)
       {
         time(&Current_sec);
@@ -554,15 +554,6 @@ int main(int argc, char *argv[])
 
             case 2:     // Devive Send Account and Devive information to check will be charged
               CheckCHGDevInfo("DaBai/RxCommTmp.txt", ChargeDevice, &ChargeDeviceCount, filebuf);
-              /*
-                if the system has the "Demolist.json" file, check RxCommTemp.txt command.
-                if the parameter "userId" which in the RxCommTmp.txt include "Demolist.json" userId.
-                there will be enable wireless charge function
-              */
-              if(CheckDemoID("DaBai/RxCommTmp.txt", filebuf))
-              {
-                SetGpioVal(GPIO_WCEN_NUM, 1);
-              }
               //BTIdx = 0;
               break;
 
@@ -614,13 +605,23 @@ int main(int argc, char *argv[])
         }
         #endif
         // for test charge List
-        if(Current_sec - Present_sec >= 10)
+        if((Current_sec - Present_sec) >= CHKCHGLISTDLY)
         {
           Present_sec = Current_sec;
           ChargeDeviceCount = UpdateChgDevice(ChargeDevice, CDVTemp, filebuf);
           if(ChargeDeviceCount == 0)
             SetGpioVal(GPIO_WCEN_NUM, 0);
           printf("ChargeDeviceCount is %d\n", ChargeDeviceCount);
+        }
+
+        /*
+          if the system has the "Demolist.json" file, check RxCommTemp.txt command.
+          if the parameter "userId" which in the RxCommTmp.txt include "Demolist.json" userId.
+          there will be enable wireless charge function
+        */
+        if(ChargeDeviceCount != 0 && (GetGpioVal(GPIO_WCEN_NUM) == 0))
+        {
+          SetGpioVal(GPIO_WCEN_NUM, 1);
         }
         //sleep(1);
       }

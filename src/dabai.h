@@ -35,6 +35,7 @@
 #define BTMIDULEPATH "/DaBai/HostDeviceInfo.json"
 #define CHGLISTPATH "/DaBai/OnlineChgList.json"
 #define DEMOLISTPATH "/DaBai/DemoList.json"
+#define CHKCHGLISTDLY 60
 
 #define DIRECT_OUT 1
 #define DIRECT_IN 0

@@ -91,11 +91,9 @@ int WriteChgList(unsigned char *path, unsigned char *filebuf, struct ClientDev *
     }
     //json_object_object_add(jobj_list, "ChgList", data);
     filebuf = json_object_to_json_string(data);
-    /*
     #if DBG_EN
         printf("json file : %s\n", filebuf);
     #endif
-    */
     for(i=0;i<ChgDevCt;i++)
       json_object_put(jobj[i]);
     json_object_put(data);
@@ -225,7 +223,7 @@ int GetChgDevFromFile(unsigned char *path, struct ClientDev *CDV)
   struct json_object *jobj_online, *jobj_value;
   int arraylen = 0, i;
 
-  Onlinebuf = (unsigned char *)calloc(2048, sizeof(unsigned char));
+  Onlinebuf = (unsigned char *)calloc(FILESIZE, sizeof(unsigned char));
   for(i=0;i<4;i++)
   {
     onlinestr[i] = (unsigned char *)calloc(FILESIZE, sizeof(unsigned char));
@@ -235,7 +233,7 @@ int GetChgDevFromFile(unsigned char *path, struct ClientDev *CDV)
   {
     while(!feof(fp_online))
     {
-      fread(Onlinebuf, 1, 2048, fp_online);
+      fread(Onlinebuf, 1, FILESIZE, fp_online);
     }
     fclose(fp_online);
   }
@@ -290,18 +288,15 @@ int CheckDemoID(unsigned char *path, unsigned char *filebuf)
     RxIdbuf = (unsigned char *)calloc(64, sizeof(unsigned char));
     DemoIdbuf = (unsigned char *)calloc(64, sizeof(unsigned char));
     memset(filebuf, 0, FILESIZE);
-    printf("path is %s\n", path);
     fp = fopen(path, "r");
     if(fp != NULL)
     {
-      printf("file open success~~~~\n");
       while(!feof(fp))
       {
         fread(filebuf, 1, FILESIZE, fp);
       }
       fclose(fp);
     }
-    printf("RxcommTmp is %s\n", filebuf);
     jobj_Rx = json_tokener_parse(filebuf);
     RxIdbuf = json_object_get_string(json_object_object_get(jobj_Rx, "userId"));
 
@@ -321,12 +316,16 @@ int CheckDemoID(unsigned char *path, unsigned char *filebuf)
     }
     jobj_Demo = json_tokener_parse(filebuf);
     arraylen = json_object_array_length(jobj_Demo);
-    printf("arraylen is %d\n", arraylen);
+    #if DBG_EN
+        printf("arraylen is %d\n", arraylen);
+    #endif
     for(i=0;i<arraylen;i++)
     {
       jobj_value = json_object_array_get_idx(jobj_Demo, i);
       DemoIdbuf = json_object_get_string(jobj_value);
-      printf("DemoIdbuf is %s, RxIdbuf is %s\n", DemoIdbuf, RxIdbuf);
+      #if DBG_EN
+          printf("DemoIdbuf is %s, RxIdbuf is %s\n", DemoIdbuf, RxIdbuf);
+      #endif
       if(strcmp(RxIdbuf, DemoIdbuf) == 0)
       {
         printf("There will be set wireless enable~~!!");
@@ -387,7 +386,9 @@ int UpdateChgDevice(struct ClientDev *CDV, struct ClientDev *Tmp, unsigned char 
   }
   for(i=0;i<CHGDEVMAX;i++)
     memset(Tmp+i, 0, sizeof(struct ClientDev));
-  printf("After update CHG List, CHG count is %d(j)\n", j);
+  #if DBG_EN
+      printf("After update CHG List, CHG count is %d(j)\n", j);
+  #endif
   WriteChgList(CHGLISTPATH, filebuf, CDV, j);
   return j;
 }
