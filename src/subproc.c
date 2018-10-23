@@ -90,7 +90,10 @@ int WriteChgList(unsigned char *path, unsigned char *filebuf, struct ClientDev *
       */
     }
     //json_object_object_add(jobj_list, "ChgList", data);
-    filebuf = json_object_to_json_string(data);
+    memset(filebuf, 0, FILESIZE);
+    length = json_object_array_length(data);
+    if(length != 0)
+      filebuf = json_object_to_json_string(data);
     #if DBG_EN
         printf("json file : %s\n", filebuf);
     #endif
