@@ -30,10 +30,11 @@
 #define SENDTOPHONEPATH "/DaBai/chongdian.jpeg"
 #define UARTRXSIZE 256
 #define UARTTXSIZE 256
-#define FILESIZE 1024
+#define FILESIZE 2048
 #define IMAGESIZE 4096
 #define BTMIDULEPATH "/DaBai/HostDeviceInfo.json"
 #define CHGLISTPATH "/DaBai/OnlineChgList.json"
+#define DEMOLISTPATH "/DaBai/DemoList.json"
 
 #define DIRECT_OUT 1
 #define DIRECT_IN 0
@@ -112,6 +113,7 @@ enum
 };
 
 struct ClientDev ChargeDevice[CHGDEVMAX];
+struct ClientDev CDVTemp[CHGDEVMAX];
 char StaSsid[128];
 char StaPassword[64];
 char StaEncryption[16];
@@ -152,6 +154,9 @@ int WriteEEpromCommand(unsigned char *commptr, unsigned int addr, unsigned char 
 // define at subporc.c
 void send_command(unsigned char *command, unsigned char *resulte, int resulte_length);
 int CheckCHGDevInfo(unsigned char *path, struct ClientDev *CDV, unsigned char *ChgDevCt, unsigned char *filebuf);
+int CheckDemoID(unsigned char *path, unsigned char *filebuf);
+int GetChgDevFromFile(unsigned char *path, struct ClientDev *CDV);
+int UpdateChgDevice(struct ClientDev *CDV, struct ClientDev *Tmp, unsigned char *filebuf);
 
 // define at hsocket.c
 void *SockConnProcess(void *arg);

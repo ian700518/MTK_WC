@@ -57,12 +57,14 @@ int WriteChgList(unsigned char *path, unsigned char *filebuf, struct ClientDev *
 {
     FILE *fp;
     int i, length = 0;
+    //struct json_object *jobj_list;
     struct json_object *jobj[CHGDEVMAX];
     struct json_object *data;
 
+    //jobj_list = json_object_new_object();
     data = json_object_new_array();
     #if DBG_EN
-        printf("into WriteChgList~~~!!\n");
+        printf("into WriteChgList~~~!!\nChgDevCt is %d\n", ChgDevCt);
     #endif
     for(i=0; i<ChgDevCt; i++)
     {
@@ -80,19 +82,24 @@ int WriteChgList(unsigned char *path, unsigned char *filebuf, struct ClientDev *
       json_object_object_add(jobj[i], "RemainT_Hr", json_object_new_int(CDV[i].RemainT_Hr));
       json_object_object_add(jobj[i], "RemainT_Min", json_object_new_int(CDV[i].RemainT_Min));
       json_object_object_add(jobj[i], "ChgMode", json_object_new_int(CDV[i].ChgMode));
-      #if DBG_EN
-          printf("at for loop jobj : %s\nat for loop data : %s\n", json_object_to_json_string(jobj[i]), json_object_to_json_string(data));
-      #endif
       json_object_array_add(data, jobj[i]);
+      /*
+      #if DBG_EN
+          printf("at for loop data : %s\n", json_object_to_json_string(data));
+      #endif
+      */
     }
-    //jobj = json_tokener_parse(filebuf);
+    //json_object_object_add(jobj_list, "ChgList", data);
     filebuf = json_object_to_json_string(data);
+    /*
     #if DBG_EN
         printf("json file : %s\n", filebuf);
     #endif
+    */
     for(i=0;i<ChgDevCt;i++)
       json_object_put(jobj[i]);
     json_object_put(data);
+    //json_object_put(jobj_list);
     fp = fopen(path, "w+");
     if(fp != NULL)
     {
@@ -133,6 +140,14 @@ int CheckCHGDevInfo(unsigned char *path, struct ClientDev *CDV, unsigned char *C
     }
     jobj = json_tokener_parse(filebuf);
     checkbuf = json_object_get_string(json_object_object_get(jobj, "userId"));
+    // First check userID and Demolist's userID, if there are the same. it is a demo account.
+    // if there is not the same, check it with server. if there are the same, it is a registed account.
+    // otherwise it is a not faild account.
+    if(CheckDemoID("DaBai/RxCommTmp.txt", filebuf) == 0)
+    {
+      if(CheckServerID("DaBai/RxCommTmp.txt", filebuf) == 0)
+        return -1;
+    }
     #if DBG_EN
         printf("filebuf to jobj string %s\n", json_object_to_json_string(jobj));
         printf("json-c checkbuf : %d\n", checkbuf);
@@ -200,4 +215,179 @@ int CheckCHGDevInfo(unsigned char *path, struct ClientDev *CDV, unsigned char *C
     #endif
     json_object_put(jobj);      // if new json object, After used must be free json object
     WriteChgList(CHGLISTPATH, filebuf, CDV, *ChgDevCt);
+}
+
+int GetChgDevFromFile(unsigned char *path, struct ClientDev *CDV)
+{
+  unsigned char *Onlinebuf;
+  unsigned char *onlinestr[4];
+  FILE *fp_online;
+  struct json_object *jobj_online, *jobj_value;
+  int arraylen = 0, i;
+
+  Onlinebuf = (unsigned char *)calloc(2048, sizeof(unsigned char));
+  for(i=0;i<4;i++)
+  {
+    onlinestr[i] = (unsigned char *)calloc(FILESIZE, sizeof(unsigned char));
+  }
+  fp_online = fopen(path, "r");
+  if(fp_online != NULL)
+  {
+    while(!feof(fp_online))
+    {
+      fread(Onlinebuf, 1, 2048, fp_online);
+    }
+    fclose(fp_online);
+  }
+  else
+  {
+    // not onlinechglist file, return 0~
+    return 0;
+  }
+  printf("onlinebuf is %s\n", Onlinebuf);
+  jobj_online = json_tokener_parse(Onlinebuf);
+  arraylen = json_object_array_length(jobj_online);
+  printf("arraylen is %d\n", arraylen);
+  if(arraylen > 0)
+  {
+    for(i=0;i<arraylen;i++)
+    {
+      jobj_value = json_object_array_get_idx(jobj_online, i);
+      (CDV+i)->DevIdx = json_object_get_int(json_object_object_get(jobj_value, "index"));
+      sprintf((CDV+i)->DevType, "%s", json_object_get_string(json_object_object_get(jobj_value, "type")));
+      sprintf((CDV+i)->DevUserId, "%s", json_object_get_string(json_object_object_get(jobj_value, "userId")));
+      sprintf((CDV+i)->DevAccount, "%s", json_object_get_string(json_object_object_get(jobj_value, "account")));
+      sprintf((CDV+i)->DevMac, "%s", json_object_get_string(json_object_object_get(jobj_value, "mac")));
+      (CDV+i)->StartTime = json_object_get_int(json_object_object_get(jobj_value, "StartTime"));
+      (CDV+i)->CurrentTime = json_object_get_int(json_object_object_get(jobj_value, "CurrentTime"));
+      sprintf((CDV+i)->DevFormatSTime, "%s", json_object_get_string(json_object_object_get(jobj_value, "FormatSTime")));
+      sprintf((CDV+i)->DevFormatCTime, "%s", json_object_get_string(json_object_object_get(jobj_value, "FormatCTime")));
+      (CDV+i)->RemainT_Hr = json_object_get_int(json_object_object_get(jobj_value, "RemainT_Hr"));
+      (CDV+i)->RemainT_Min = json_object_get_int(json_object_object_get(jobj_value, "RemainT_Min"));
+      (CDV+i)->ChgMode = json_object_get_int(json_object_object_get(jobj_value, "ChgMode"));
+      onlinestr[i] = json_object_get_string(jobj_value);
+      #if DBG_EN
+          printf("list[%d] is %s\n", i, onlinestr[i]);
+      #endif
+    }
+    return arraylen;
+  }
+  else
+  {
+    // not anymore charge device in the list file!
+    return 0;
+  }
+}
+
+int CheckDemoID(unsigned char *path, unsigned char *filebuf)
+{
+    FILE *fp;
+    struct json_object *jobj_Rx, *jobj_Demo, *jobj_id, *jobj_value;
+    unsigned char *RxIdbuf, *DemoIdbuf;
+    int arraylen, i;
+
+    //Demobuf = (unsigned char *)calloc(FILESIZE, sizeof(unsigned char));
+    RxIdbuf = (unsigned char *)calloc(64, sizeof(unsigned char));
+    DemoIdbuf = (unsigned char *)calloc(64, sizeof(unsigned char));
+    memset(filebuf, 0, FILESIZE);
+    printf("path is %s\n", path);
+    fp = fopen(path, "r");
+    if(fp != NULL)
+    {
+      printf("file open success~~~~\n");
+      while(!feof(fp))
+      {
+        fread(filebuf, 1, FILESIZE, fp);
+      }
+      fclose(fp);
+    }
+    printf("RxcommTmp is %s\n", filebuf);
+    jobj_Rx = json_tokener_parse(filebuf);
+    RxIdbuf = json_object_get_string(json_object_object_get(jobj_Rx, "userId"));
+
+    memset(filebuf, 0, FILESIZE);
+    fp = fopen(DEMOLISTPATH, "r");
+    if(fp != NULL)
+    {
+      while(!feof(fp))
+      {
+        fread(filebuf, 1, FILESIZE, fp);
+      }
+      fclose(fp);
+    }
+    else
+    {
+      return 0;
+    }
+    jobj_Demo = json_tokener_parse(filebuf);
+    arraylen = json_object_array_length(jobj_Demo);
+    printf("arraylen is %d\n", arraylen);
+    for(i=0;i<arraylen;i++)
+    {
+      jobj_value = json_object_array_get_idx(jobj_Demo, i);
+      DemoIdbuf = json_object_get_string(jobj_value);
+      printf("DemoIdbuf is %s, RxIdbuf is %s\n", DemoIdbuf, RxIdbuf);
+      if(strcmp(RxIdbuf, DemoIdbuf) == 0)
+      {
+        printf("There will be set wireless enable~~!!");
+        return 1;
+      }
+    }
+    free(RxIdbuf);
+    free(DemoIdbuf);
+    return 0;
+}
+
+int CheckServerID(unsigned char *path, unsigned char *filebuf)
+{
+  return 0;
+}
+
+int UpdateChgDevice(struct ClientDev *CDV, struct ClientDev *Tmp, unsigned char *filebuf)
+{
+  int i,j=0;
+  time_t cur_time;
+
+  for(i=0;i<CHGDEVMAX;i++)
+  {
+    time(&cur_time);
+    if((cur_time - (CDV+i)->CurrentTime) < 10)
+    {
+      (Tmp+j)->DevIdx = (CDV+i)->DevIdx;
+      sprintf((Tmp+j)->DevType, "%s", (CDV+i)->DevType);
+      sprintf((Tmp+j)->DevUserId, "%s", (CDV+i)->DevUserId);
+      sprintf((Tmp+j)->DevAccount, "%s", (CDV+i)->DevAccount);
+      sprintf((Tmp+j)->DevMac, "%s", (CDV+i)->DevMac);
+      (Tmp+j)->StartTime = (CDV+i)->StartTime;
+      (Tmp+j)->CurrentTime = (CDV+i)->CurrentTime;
+      sprintf((Tmp+j)->DevFormatSTime, "%s", (CDV+i)->DevFormatSTime);
+      sprintf((Tmp+j)->DevFormatCTime, "%s", (CDV+i)->DevFormatCTime);
+      (Tmp+j)->RemainT_Hr = (CDV+i)->RemainT_Hr;
+      (Tmp+j)->RemainT_Min = (CDV+i)->RemainT_Min;
+      (Tmp+j)->ChgMode = (CDV+i)->ChgMode;
+      j++;
+    }
+  }
+  for(i=0;i<CHGDEVMAX;i++)
+    memset(CDV+i, 0, sizeof(struct ClientDev));
+  for(i=0;i<j;i++)
+  {
+    (CDV+i)->DevIdx = i;
+    sprintf((CDV+i)->DevType, "%s", (Tmp+i)->DevType);
+    sprintf((CDV+i)->DevUserId, "%s", (Tmp+i)->DevUserId);
+    sprintf((CDV+i)->DevAccount, "%s", (Tmp+i)->DevAccount);
+    sprintf((CDV+i)->DevMac, "%s", (Tmp+i)->DevMac);
+    (CDV+i)->StartTime = (Tmp+i)->StartTime;
+    (CDV+i)->CurrentTime = (Tmp+i)->CurrentTime;
+    sprintf((CDV+i)->DevFormatSTime, "%s", (Tmp+i)->DevFormatSTime);
+    sprintf((CDV+i)->DevFormatCTime, "%s", (Tmp+i)->DevFormatCTime);
+    (CDV+i)->RemainT_Hr = (Tmp+i)->RemainT_Hr;
+    (CDV+i)->RemainT_Min = (Tmp+i)->RemainT_Min;
+    (CDV+i)->ChgMode = (Tmp+i)->ChgMode;
+  }
+  for(i=0;i<CHGDEVMAX;i++)
+    memset(Tmp+i, 0, sizeof(struct ClientDev));
+  printf("After update CHG List, CHG count is %d(j)\n", j);
+  WriteChgList(CHGLISTPATH, filebuf, CDV, j);
+  return j;
 }

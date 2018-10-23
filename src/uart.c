@@ -104,8 +104,8 @@ int set_speed(int fd, int speed)
              status = tcsetattr(fd, TCSANOW, &Opt);
              if(status != 0)
              {
-                      perror("tcsetattr fd1");
-                      return -1;
+                perror("tcsetattr fd1");
+                return -1;
              }
              tcflush(fd,TCIOFLUSH);
          }

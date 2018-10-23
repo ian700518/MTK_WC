@@ -1,0 +1,58 @@
+[
+  {
+    "index": 0,
+    "type": "iOS",
+    "userId": "Demo001",
+    "account": "17302102949",
+    "mac": "09:A9:1E:84:31:B2",
+    "StartTime": 1539777116,
+    "CurrentTime": 1539777116,
+    "FormatSTime": "10\/17\/18 - 11:51:56",
+    "FormatCTime": "10\/17\/18 - 11:51:56",
+    "RemainT_Hr": 0,
+    "RemainT_Min": 0,
+    "ChgMode": 0
+  },
+  {
+    "index": 1,
+    "type": "android",
+    "userId": "Demo002",
+    "account": "17802104639",
+    "mac": "42:90:59:09:0A:92",
+    "StartTime": 1539777157,
+    "CurrentTime": 1539777157,
+    "FormatSTime": "10\/17\/18 - 11:52:37",
+    "FormatCTime": "10\/17\/18 - 11:52:37",
+    "RemainT_Hr": 0,
+    "RemainT_Min": 0,
+    "ChgMode": 0
+  },
+  {
+    "index": 2,
+    "type": "android",
+    "userId": "Demo004",
+    "account": "17802104639",
+    "mac": "42:90:59:09:0A:92",
+    "StartTime": 1539777157,
+    "CurrentTime": 1539777157, 
+    "FormatSTime": "10\/17\/18 - 11:52:37",
+    "FormatCTime": "10\/17\/18 - 11:52:37",
+    "RemainT_Hr": 0,
+    "RemainT_Min": 0,
+    "ChgMode": 0
+  },
+  {
+    "index": 3,
+    "type": "android",
+    "userId": "Demo005",
+    "account": "17802104639",
+    "mac": "42:90:59:09:0A:92",
+    "StartTime": 1539777157,
+    "CurrentTime": 1539777157,
+    "FormatSTime": "10\/17\/18 - 11:52:37",
+    "FormatCTime": "10\/17\/18 - 11:52:37",
+    "RemainT_Hr": 0,
+    "RemainT_Min": 0,
+    "ChgMode": 0
+  }
+]

@@ -516,42 +516,113 @@ int main(int argc, char *argv[])
       }
       printf("Dabai process starting~~~!!!\n");
 
+      /*
+        first :  clear ChargeDevice array.
+        second : if has any charge device information in the file, write it into ChargeDevice array.
+      */
+      ChargeDeviceCount = 0;
+      for(i=0;i<CHGDEVMAX;i++)
+      {
+        memset(ChargeDevice+i, 0, sizeof(struct ClientDev));
+      }
+      printf("GetChgDevFromFile\n");
+      ChargeDeviceCount = GetChgDevFromFile("/DaBai/OnlineChgList.json", ChargeDevice);
+
       Sockarg = (struct SocketPara *)malloc(sizeof(struct SocketPara));
       Sockarg->Addr = "192.168.100.100";
       Sockarg->Port = 12345;
 
       printf("before pthread_create~~~~~~~\n");
       pthread_create(&thrid, NULL, SockConnProcess, (void *)Sockarg);
+
+      // for test chage list
+      for(i=0;i<CHGDEVMAX;i++)
+      {
+        time(&Current_sec);
+        ChargeDevice[i].CurrentTime = Current_sec;
+      }
+      Present_sec = Current_sec;
+      // for test chage list
       while(1)
       {
-          switch(BTTransferUart(fd, "DaBai/RxCommTmp.txt", rxbuf, filebuf))
+        time(&Current_sec);
+        switch(BTTransferUart(fd, "DaBai/RxCommTmp.txt", rxbuf, filebuf))
+        {
+            case 1:     // Set Device Network Information
+              //BTIdx = 0;
+              break;
+
+            case 2:     // Devive Send Account and Devive information to check will be charged
+              CheckCHGDevInfo("DaBai/RxCommTmp.txt", ChargeDevice, &ChargeDeviceCount, filebuf);
+              /*
+                if the system has the "Demolist.json" file, check RxCommTemp.txt command.
+                if the parameter "userId" which in the RxCommTmp.txt include "Demolist.json" userId.
+                there will be enable wireless charge function
+              */
+              if(CheckDemoID("DaBai/RxCommTmp.txt", filebuf))
+              {
+                SetGpioVal(GPIO_WCEN_NUM, 1);
+              }
+              //BTIdx = 0;
+              break;
+
+            case 3:     // Set Bluetooth Device Name
+              close(fd);
+              ChangBTName("DaBai/RxCommTmp.txt", rxbuf, filebuf);
+              //BTIdx = 0;
+              fd = uart_initial(DEV_UART, BAUDRATE, DATABIT, PARITY, STOPBIT);
+              if(fd < 0)
+              {
+                  printf("Uart open error~~~!!!\n");
+                  //return -1;
+              }
+              break;
+
+            default:
+              //printf("Uart receive format is error\n");
+              break;
+        }
+        // for test charge List
+        #if 0
+        for(i=0;i<ChargeDeviceCount;i++)
+        {
+          time(&Current_sec);
+          if((Current_sec - Present_sec) < 20)
           {
-              case 1:     // Set Device Network Information
-                //BTIdx = 0;
-                break;
-
-              case 2:     // Devive Send Account and Devive information to check will be charged
-                CheckCHGDevInfo("DaBai/RxCommTmp.txt", ChargeDevice, &ChargeDeviceCount, filebuf);
-                //BTIdx = 0;
-                break;
-
-              case 3:     // Set Bluetooth Device Name
-                close(fd);
-                ChangBTName("DaBai/RxCommTmp.txt", rxbuf, filebuf);
-                //BTIdx = 0;
-                fd = uart_initial(DEV_UART, BAUDRATE, DATABIT, PARITY, STOPBIT);
-                if(fd < 0)
-                {
-                    printf("Uart open error~~~!!!\n");
-                    //return -1;
-                }
-                break;
-
-              default:
-                printf("Uart receive format is error\n");
-                break;
+            if((strcmp((ChargeDevice+i)->DevUserId, "Demo001") == 0) || (strcmp((ChargeDevice+i)->DevUserId, "Demo002") == 0) || (strcmp((ChargeDevice+i)->DevUserId, "Demo005") == 0))
+            {
+              printf("DevUserId is %s\n", (ChargeDevice+i)->DevUserId);
+              ChargeDevice[i].CurrentTime = Current_sec;
+            }
           }
-          sleep(1);
+          else if((Current_sec - Present_sec) >= 20 && (Current_sec - Present_sec) < 40)
+          {
+            if((strcmp((ChargeDevice+i)->DevUserId, "Demo002") == 0) || (strcmp((ChargeDevice+i)->DevUserId, "Demo005") == 0))
+            {
+              printf("DevUserId is %s\n", (ChargeDevice+i)->DevUserId);
+              ChargeDevice[i].CurrentTime = Current_sec;
+            }
+          }
+          else if((Current_sec - Present_sec) >= 40 && (Current_sec - Present_sec) < 60)
+          {
+            if((strcmp((ChargeDevice+i)->DevUserId, "Demo005") == 0))
+            {
+              printf("DevUserId is %s\n", (ChargeDevice+i)->DevUserId);
+              ChargeDevice[i].CurrentTime = Current_sec;
+            }
+          }
+        }
+        #endif
+        // for test charge List
+        if(Current_sec - Present_sec >= 10)
+        {
+          Present_sec = Current_sec;
+          ChargeDeviceCount = UpdateChgDevice(ChargeDevice, CDVTemp, filebuf);
+          if(ChargeDeviceCount == 0)
+            SetGpioVal(GPIO_WCEN_NUM, 0);
+          printf("ChargeDeviceCount is %d\n", ChargeDeviceCount);
+        }
+        //sleep(1);
       }
     }
     exit(0);
