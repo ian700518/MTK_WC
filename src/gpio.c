@@ -2,84 +2,84 @@
 
 unsigned GetGpioVal(int gpio_num)
 {
-    char resulte[64], command[64];
-    int reg_add, reg_val;
-    int mod_v, div_v;
+  char resulte[64], command[64];
+  int reg_add, reg_val;
+  int mod_v, div_v;
 
-    div_v = gpio_num / 32;
-    mod_v = gpio_num % 32;
-    switch(div_v)
-    {
-      case 0:
-        reg_add = GPIODATA_0;
-        break;
+  div_v = gpio_num / 32;
+  mod_v = gpio_num % 32;
+  switch(div_v)
+  {
+    case 0:
+      reg_add = GPIODATA_0;
+      break;
 
-      case 1:
-        reg_add = GPIODATA_1;
-        break;
+    case 1:
+      reg_add = GPIODATA_1;
+      break;
 
-      case 2:
-        reg_add = GPIODATA_2;
-        break;
+    case 2:
+      reg_add = GPIODATA_2;
+      break;
 
-      default:
-        return -1;
-        break;
-    }
-  	sprintf(command, "devmem 0x%08x", reg_add);
-  	send_command(command, resulte, sizeof(resulte));
-  	reg_val = strtoul(resulte + 2, NULL, 16);
-    //reg_val ^= (1 << mod_v);
-    if(((reg_val >> mod_v) & 0x00000001) != 0)
-    {
-        return 1;
-    }
-    else
-    {
-        return 0;
-    }
+    default:
+      return -1;
+      break;
+  }
+	sprintf(command, "devmem 0x%08x", reg_add);
+	send_command(command, resulte, sizeof(resulte));
+	reg_val = strtoul(resulte + 2, NULL, 16);
+  //reg_val ^= (1 << mod_v);
+  if(((reg_val >> mod_v) & 0x00000001) != 0)
+  {
+    return 1;
+  }
+  else
+  {
+    return 0;
+  }
 }
 
 int SetGpioVal(int gpio_num, int val)
 {
-    char resulte[64], command[64];
-    int reg_add, reg_val;
-    int mod_v, div_v;
+  char resulte[64], command[64];
+  int reg_add, reg_val;
+  int mod_v, div_v;
 
-    div_v = gpio_num / 32;
-    mod_v = gpio_num % 32;
-    switch(div_v)
-    {
-      case 0:
-        reg_add = GPIODATA_0;
-        break;
+  div_v = gpio_num / 32;
+  mod_v = gpio_num % 32;
+  switch(div_v)
+  {
+    case 0:
+      reg_add = GPIODATA_0;
+      break;
 
-      case 1:
-        reg_add = GPIODATA_1;
-        break;
+    case 1:
+      reg_add = GPIODATA_1;
+      break;
 
-      case 2:
-        reg_add = GPIODATA_2;
-        break;
+    case 2:
+      reg_add = GPIODATA_2;
+      break;
 
-      default:
-        return -1;
-        break;
-    }
-  	sprintf(command, "devmem 0x%08x", reg_add);
-  	send_command(command, resulte, sizeof(resulte));
-  	reg_val = strtoul(resulte + 2, NULL, 16);
-    if(val)
-    {
-        reg_val |= (val << mod_v);
-    }
-    else
-    {
-        reg_val &= ~((val | 1) << mod_v);
-    }
-    sprintf(command, "devmem 0x%x 32 0x%08x", reg_add, reg_val);
-    send_command(command, NULL, 0);
-    return 1;
+    default:
+      return -1;
+      break;
+  }
+	sprintf(command, "devmem 0x%08x", reg_add);
+	send_command(command, resulte, sizeof(resulte));
+	reg_val = strtoul(resulte + 2, NULL, 16);
+  if(val)
+  {
+    reg_val |= (val << mod_v);
+  }
+  else
+  {
+    reg_val &= ~((val | 1) << mod_v);
+  }
+  sprintf(command, "devmem 0x%x 32 0x%08x", reg_add, reg_val);
+  send_command(command, NULL, 0);
+  return 1;
 }
 
 
@@ -161,7 +161,6 @@ int GpioIOInitial(int num, int mode, int val)
 			return ERR_GPIO_VAL;
 		}
 	}
-
 	return OK_GPIO;
 }
 
