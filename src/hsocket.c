@@ -149,25 +149,10 @@ void *SockConnProcess(void *arg)
   struct SocketPara *Sockarg;
   Sockarg = (struct SocketPara *)arg;
 
-  DBGSK("into SockConnProcess ~~~!!!\n");
-  //if(fork() == 0)
-  //{
-    //if(fork() == 0)
-    //{
-      DBGSK("First print Nameaddr Sockarg->Addr '%s', Sockarg->Port '%d'\n", Sockarg->Addr, Sockarg->Port);
-      while(1)
-      {
-        Connect2Ser(Sockarg->Addr, Sockarg->Port);
-        sleep(1);
-      }
-    //}
-    //else
-    //{
-    //  waitpid();
-    //}
-  //}
-  //else
-  //{
-  //  waitpid();
-  //}
+  DBGSK("First print Nameaddr Sockarg->Addr '%s', Sockarg->Port '%d'\n", Sockarg->Addr, Sockarg->Port);
+  while(1)
+  {
+    Connect2Ser(Sockarg->Addr, Sockarg->Port);
+    sleep(3);
+  }
 }

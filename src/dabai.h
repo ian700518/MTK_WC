@@ -20,7 +20,7 @@
 #endif
 
 // for gpio.c
-#define DEBUG_GPIO 1
+#define DEBUG_GPIO 0
 #if (DEBUG_GPIO)
   #define DBGGPIO(...) printf(__VA_ARGS__)
 #else
@@ -36,7 +36,7 @@
 #endif
 
 // for hsocket.c
-#define DEBUG_SK 1
+#define DEBUG_SK 0
 #if (DEBUG_SK)
   #define DBGSK(...) printf(__VA_ARGS__)
 #else
@@ -44,7 +44,7 @@
 #endif
 
 // for network.c
-#define DEBUG_NET 1
+#define DEBUG_NET 0
 #if (DEBUG_NET)
   #define DBGNET(...) printf(__VA_ARGS__)
 #else
@@ -60,12 +60,13 @@
 #endif
 
 // for uart.c
-#define DEBUG_UART 1
+#define DEBUG_UART 0
 #if (DEBUG_UART)
   #define DBGUART(...) printf(__VA_ARGS__)
 #else
   #define DBGUART(...)
 #endif
+
 //#define BM78SPP05MC2 1
 #define BM78SPP05NC2 1			// define Bluetooth module
 

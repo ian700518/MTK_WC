@@ -157,24 +157,28 @@ int main(int argc, char *argv[])
                   for(i=0;i<recctmain;i++)
                     DBGMSG("0x%02x ", rxbuf[i]);
                   DBGMSG("]\n");
+                  close(fd);
                   exit(0);
                 }
               }
               else
               {
                 DBGMSG("Read baudrate from eeprom, and receive data is not correct~!");
+                close(fd);
                 exit(0);
               }
             }
             else
             {
               DBGMSG("After Setting Baudrate command, there is not receive any data !!!!!!!!!!\n");
+              close(fd);
               exit(0);
             }
           }
           else
           {
             DBGMSG("The New Baurdate Value is the same with EEProm Value !!!!!!!!!!\n");
+            close(fd);
             exit(0);
           }
         }
@@ -182,6 +186,7 @@ int main(int argc, char *argv[])
       else
       {
         DBGMSG("There is not receive any data~~~~~!!!!!");
+        close(fd);
         exit(0);
       }
     }
@@ -266,30 +271,35 @@ int main(int argc, char *argv[])
                 for(i=0;i<recctmain;i++)
                   DBGMSG("0x%02x ", rxbuf[i]);
                 DBGMSG("]\n");
+                close(fd);
                 exit(0);
               }
             }
             else
             {
               DBGMSG("Read operation pattern from eeprom, and receive data is not correct~!");
+              close(fd);
               exit(0);
             }
           }
           else
           {
             DBGMSG("After Setting Operation pattern command, there is not receive any data !!!!!!!!!!\n");
+            close(fd);
             exit(0);
           }
         }
         else
         {
           DBGMSG("The New Operation pattern Value is the same with EEProm Value !!!!!!!!!!\n");
+          close(fd);
           exit(0);
         }
       }
       else
       {
         DBGMSG("There is not receive any data~~~~~!!!!!");
+        close(fd);
         exit(0);
       }
     }
@@ -366,30 +376,35 @@ int main(int argc, char *argv[])
                 for(i=0;i<recctmain;i++)
                   DBGMSG("0x%02x ", rxbuf[i]);
                 DBGMSG("]\n");
+                close(fd);
                 exit(0);
               }
             }
             else
             {
               DBGMSG("Read operation pattern from eeprom, and receive data is not correct~!");
+              close(fd);
               exit(0);
             }
           }
           else
           {
             DBGMSG("After Setting Operation pattern command, there is not receive any data !!!!!!!!!!\n");
+            close(fd);
             exit(0);
           }
         }
         else
         {
           DBGMSG("The New Operation pattern Delay Time Value is the same with EEProm Value !!!!!!!!!!\n");
+          close(fd);
           exit(0);
         }
       }
       else
       {
         DBGMSG("There is not receive any data~~~~~!!!!!");
+        close(fd);
         exit(0);
       }
     }
@@ -427,6 +442,7 @@ int main(int argc, char *argv[])
         }
       }
       BTModuleReset();
+      close(fd);
       exit(0);
     }
     else
@@ -471,6 +487,7 @@ int main(int argc, char *argv[])
         else
           i++;
       }
+      close(fd);
       exit(0);
     }
   }
@@ -533,6 +550,7 @@ int main(int argc, char *argv[])
     pthread_create(&thrid, NULL, SockConnProcess, (void *)Sockarg);
 
     // for test chage list
+    /*
     #if 0
     for(i=0;i<CHGDEVMAX;i++)
     {
@@ -541,6 +559,7 @@ int main(int argc, char *argv[])
     }
     #endif
     // for test chage list
+    */
     time(&Current_sec);
     Present_sec = Current_sec;
     while(1)
@@ -629,8 +648,9 @@ int main(int argc, char *argv[])
       {
         SetGpioVal(GPIO_WCEN_NUM, 1);
       }
-      //sleep(1);
+      usleep(100000);
     }
   }
+  close(fd);
   exit(0);
 }
