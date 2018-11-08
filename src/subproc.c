@@ -219,34 +219,41 @@ int GetChgDevFromFile(unsigned char *path, struct ClientDev *CDV)
     return 0;
   }
   DBGSUB("onlinebuf is %s\n", Onlinebuf);
-  jobj_online = json_tokener_parse(Onlinebuf);
-  arraylen = json_object_array_length(jobj_online);
-  DBGSUB("arraylen is %d\n", arraylen);
-  if(arraylen > 0)
+  if(strlen(Onlinebuf) > 0)
   {
-    for(i=0;i<arraylen;i++)
+    jobj_online = json_tokener_parse(Onlinebuf);
+    arraylen = json_object_array_length(jobj_online);
+    DBGSUB("arraylen is %d\n", arraylen);
+    if(arraylen > 0)
     {
-      jobj_value = json_object_array_get_idx(jobj_online, i);
-      (CDV+i)->DevIdx = json_object_get_int(json_object_object_get(jobj_value, "index"));
-      sprintf((CDV+i)->DevType, "%s", json_object_get_string(json_object_object_get(jobj_value, "type")));
-      sprintf((CDV+i)->DevUserId, "%s", json_object_get_string(json_object_object_get(jobj_value, "userId")));
-      sprintf((CDV+i)->DevAccount, "%s", json_object_get_string(json_object_object_get(jobj_value, "account")));
-      sprintf((CDV+i)->DevMac, "%s", json_object_get_string(json_object_object_get(jobj_value, "mac")));
-      (CDV+i)->StartTime = json_object_get_int(json_object_object_get(jobj_value, "StartTime"));
-      (CDV+i)->CurrentTime = json_object_get_int(json_object_object_get(jobj_value, "CurrentTime"));
-      sprintf((CDV+i)->DevFormatSTime, "%s", json_object_get_string(json_object_object_get(jobj_value, "FormatSTime")));
-      sprintf((CDV+i)->DevFormatCTime, "%s", json_object_get_string(json_object_object_get(jobj_value, "FormatCTime")));
-      (CDV+i)->RemainT_Hr = json_object_get_int(json_object_object_get(jobj_value, "RemainT_Hr"));
-      (CDV+i)->RemainT_Min = json_object_get_int(json_object_object_get(jobj_value, "RemainT_Min"));
-      (CDV+i)->ChgMode = json_object_get_int(json_object_object_get(jobj_value, "ChgMode"));
-      onlinestr[i] = json_object_get_string(jobj_value);
-      DBGSUB("list[%d] is %s\n", i, onlinestr[i]);
+      for(i=0;i<arraylen;i++)
+      {
+        jobj_value = json_object_array_get_idx(jobj_online, i);
+        (CDV+i)->DevIdx = json_object_get_int(json_object_object_get(jobj_value, "index"));
+        sprintf((CDV+i)->DevType, "%s", json_object_get_string(json_object_object_get(jobj_value, "type")));
+        sprintf((CDV+i)->DevUserId, "%s", json_object_get_string(json_object_object_get(jobj_value, "userId")));
+        sprintf((CDV+i)->DevAccount, "%s", json_object_get_string(json_object_object_get(jobj_value, "account")));
+        sprintf((CDV+i)->DevMac, "%s", json_object_get_string(json_object_object_get(jobj_value, "mac")));
+        (CDV+i)->StartTime = json_object_get_int(json_object_object_get(jobj_value, "StartTime"));
+        (CDV+i)->CurrentTime = json_object_get_int(json_object_object_get(jobj_value, "CurrentTime"));
+        sprintf((CDV+i)->DevFormatSTime, "%s", json_object_get_string(json_object_object_get(jobj_value, "FormatSTime")));
+        sprintf((CDV+i)->DevFormatCTime, "%s", json_object_get_string(json_object_object_get(jobj_value, "FormatCTime")));
+        (CDV+i)->RemainT_Hr = json_object_get_int(json_object_object_get(jobj_value, "RemainT_Hr"));
+        (CDV+i)->RemainT_Min = json_object_get_int(json_object_object_get(jobj_value, "RemainT_Min"));
+        (CDV+i)->ChgMode = json_object_get_int(json_object_object_get(jobj_value, "ChgMode"));
+        onlinestr[i] = json_object_get_string(jobj_value);
+        DBGSUB("list[%d] is %s\n", i, onlinestr[i]);
+      }
+      return arraylen;
     }
-    return arraylen;
+    else
+    {
+      // not anymore charge device in the list file!
+      return 0;
+    }
   }
   else
   {
-    // not anymore charge device in the list file!
     return 0;
   }
 }
@@ -320,7 +327,7 @@ int UpdateChgDevice(struct ClientDev *CDV, struct ClientDev *Tmp, unsigned char 
   for(i=0;i<CHGDEVMAX;i++)
   {
     time(&cur_time);
-    if((cur_time - (CDV+i)->CurrentTime) < 30)
+    if((cur_time > (CDV+i)->CurrentTime) && (cur_time - (CDV+i)->CurrentTime) < CHGUPDATEDLY)
     {
       (Tmp+j)->DevIdx = (CDV+i)->DevIdx;
       sprintf((Tmp+j)->DevType, "%s", (CDV+i)->DevType);

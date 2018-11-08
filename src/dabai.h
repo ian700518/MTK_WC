@@ -92,6 +92,7 @@
 #define CHGLISTPATH "/DaBai/OnlineChgList.json"
 #define DEMOLISTPATH "/DaBai/DemoList.json"
 #define CHKCHGLISTDLY 300
+#define CHGUPDATEDLY 60
 
 #define DIRECT_OUT 1
 #define DIRECT_IN 0
@@ -178,9 +179,9 @@ char DBStoreId[128];
 int CmdIndex;
 int TypeIdx;
 unsigned char ChargeDeviceCount;
-//unsigned char GetBTConfigFlag;
-//unsigned char BTIntoConfigMode;
-//unsigned char ChangBTModuleNameFlag;
+unsigned char GetBTConfigFlag;
+unsigned char BTIntoConfigMode;
+unsigned char ChangBTModuleNameFlag;
 unsigned char BTEEPROM_MODE;
 
 // define at gpio.c

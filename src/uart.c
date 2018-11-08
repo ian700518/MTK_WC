@@ -56,7 +56,8 @@ int uart_initial(char *dev, int baudrate, int bits, int parity, int stopbits)
     if(BTEEPROM_MODE == 1)
       send_command("devmem 0x10000c2c 32 0x0000000e", NULL, 0);         // baudrate 115200
     else
-      send_command("devmem 0x10000c2c 32 0x00000018", NULL, 0);         // baudrate 57600
+      send_command("devmem 0x10000c2c 32 0x0000000e", NULL, 0);         // baudrate 115200
+      //send_command("devmem 0x10000c2c 32 0x00000018", NULL, 0);         // baudrate 57600
     return fd;
   }
   return -1;

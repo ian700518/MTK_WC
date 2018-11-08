@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
   // set AGPIO_CFG
   send_command("devmem 0x1000003C", membuf, sizeof(membuf));
   reg = strtoul(membuf + 2, NULL, 16);
-  reg |= 0x000E000F;
+  reg |= 0x001E000F;
   sprintf(membuf, "devmem 0x1000003c 32 0x%08x", reg);
   send_command(membuf, NULL, 0);
   memset(membuf, 0, sizeof(membuf));
@@ -53,15 +53,15 @@ int main(int argc, char *argv[])
     else
       DBGMSG("%s\"\n", argv[i]);
   }
-  send_command("devmem 0x10000c24 32 0x00000003", NULL, 0);        // Set Uart0 HighSpeed to 1, and real uart0 baudrate will used 115200
+  send_command("devmem 0x10000c24 32 0x00000003", NULL, 0);        // Set Uart0 HighSpeed to 3, and real uart0 baudrate will used 115200
   PinSetForBMModule();
+  fd = uart_initial(DEV_UART, BAUDRATE, DATABIT, PARITY, STOPBIT);
+  if(fd < 0)
+      return -1;
   if(argc > 1)
   {
     BTEEPROM_MODE = 1;
     DBGMSG("BT Module into EEprom Mode~~!!\ncommand is \"");
-    fd = uart_initial(DEV_UART, BAUDRATE, DATABIT, PARITY, STOPBIT);
-    if(fd < 0)
-        return -1;
     for(i=0;i<argc;i++)
     {
       if(i < (argc - 1))
@@ -493,28 +493,34 @@ int main(int argc, char *argv[])
   }
   else
   {
-    BTEEPROM_MODE = 1;
+    BTEEPROM_MODE = 0;
     DBGMSG("BT Module into Normal Mode~~!!\n command is \"%s\", parameter is %d\n", argv[0], argc);
-    PinSetForBMModule();
-    ////GetBTConfigFlag = 0;
-    ////BTIntoConfigMode = 0;
-    ////ChangBTModuleNameFlag = 0;
+    fd = uart_initial(DEV_UART, BAUDRATE, DATABIT, PARITY, STOPBIT);
+    if(fd < 0)
+    {
+      DBGMSG("Uart open error~~~!!!\n");
+      return -1;
+    }
+    SetBMModuleMode(normal_mode);
+    GetBTConfigFlag = 0;
+    BTIntoConfigMode = 0;
+    ChangBTModuleNameFlag = 0;
     // detect BT module and read bt module mac address
-    ////while(BTIntoConfigMode == 0)
-    ////{
-    ////  recctmain = uart_read(fd, rxbuf);
-    ////  if(recctmain > 0)
-    ////  {
-    ////    for(i=0;i<recctmain;i++)
-    ////      DBGMSG("rxbuf[%d] is : 0x%x\n", i, rxbuf[i]);
-    ////    if((rxbuf[0] == 0xAA) && (rxbuf[3] == 0x8F) && (rxbuf[4] == 0x01))
-    ////    {
-    ////        memset(rxbuf, 0, strlen(rxbuf));
-    ////        BTIntoConfigMode = 1;
-    ////    }
-    ////  }
-    ////}
-    ////close(fd);
+    while(BTIntoConfigMode == 0)
+    {
+      recctmain = uart_read(fd, rxbuf);
+      if(recctmain > 0)
+      {
+        for(i=0;i<recctmain;i++)
+          DBGMSG("rxbuf[%d] is : 0x%x\n", i, rxbuf[i]);
+        if((rxbuf[0] == 0xAA) && (rxbuf[3] == 0x8F) && (rxbuf[4] == 0x01))
+        {
+            memset(rxbuf, 0, strlen(rxbuf));
+            BTIntoConfigMode = 1;
+        }
+      }
+    }
+    close(fd);
     GetBTModuleName(BTMIDULEPATH, rxbuf, filebuf);    // Get BT Module Name
     GetBTModuleInof(BTMIDULEPATH, rxbuf, filebuf);    // Get BT Module Information like MAC address
     BTModuleLeaveConfigMode(rxbuf);    // BT Module Leave Config Mode, into Normal Mode
