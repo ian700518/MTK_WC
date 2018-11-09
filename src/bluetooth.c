@@ -112,7 +112,7 @@ int ReadEEpromCommand(unsigned char *commptr, unsigned int addr, unsigned char b
   *(commptr + 4) = (unsigned char)(addr >> 8) & 0xFF;
   *(commptr + 5) = (unsigned char)addr & 0xFF;
   *(commptr + 6) = byte_num;
-  return strlen(commptr);
+  return byte_num + 7;
 }
 
 int WriteEEpromCommand(unsigned char *commptr, unsigned int addr, unsigned char byte_num, unsigned char *writeptr)
@@ -130,7 +130,7 @@ int WriteEEpromCommand(unsigned char *commptr, unsigned int addr, unsigned char 
   {
     *(commptr + i + 7) = *(writeptr + i);
   }
-  return strlen(commptr);
+  return byte_num + 7;
 }
 
 int GetBTModuleInof(unsigned char *path, unsigned char *rxbuf, unsigned char *filebuf)

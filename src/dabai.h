@@ -60,7 +60,7 @@
 #endif
 
 // for uart.c
-#define DEBUG_UART 0
+#define DEBUG_UART 1
 #if (DEBUG_UART)
   #define DBGUART(...) printf(__VA_ARGS__)
 #else

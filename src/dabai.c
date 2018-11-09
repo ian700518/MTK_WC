@@ -3,6 +3,7 @@
 
 const unsigned int BaudRateList[10] = {115200, 57600, 38400, 28800, 19200, 14400, 9600, 4800, 2400, 1000000};
 const unsigned char BRSValue[10] = {0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x11};
+const unsigned char defeep[8] = {0x00, 0x00, 0x00, 0x1B, 0x49, 0x10, 0x11, 0x33};
 
 int main(int argc, char *argv[])
 {
@@ -21,6 +22,7 @@ int main(int argc, char *argv[])
   unsigned char GetEEprom[7];
   unsigned char SetEEprom[40];
   unsigned char SetEEVal[32];
+  unsigned int SetEELen;
 
   rxbuf = (unsigned char *)calloc(UARTRXSIZE, sizeof(unsigned char));
   filebuf = (unsigned char *)calloc(FILESIZE, sizeof(unsigned char));
@@ -72,6 +74,7 @@ int main(int argc, char *argv[])
     memset(SetEEVal, 0, sizeof(SetEEVal));
     memset(GetEEprom, 0, sizeof(GetEEprom));
     memset(SetEEprom, 0, sizeof(SetEEprom));
+    SetEELen = 0;
     SetBMModuleMode(WEE_mode);
     if(strcmp("baudrate", argv[1]) == 0)    // Set BaudRate command
     {
@@ -110,18 +113,18 @@ int main(int argc, char *argv[])
           if((rxbuf[10] != BRC) && BRC != 0)
           {
             SetEEVal[0] = BRC;
-            WriteEEpromCommand(SetEEprom, 0x0031, 1, SetEEVal);
+            SetEELen = WriteEEpromCommand(SetEEprom, 0x0031, 1, SetEEVal);
             //MadeSBRComm(SetBRComm, BRC);
             DBGMSG("Send Write eeprom value command [");
-            for(i=0;i<sizeof(SetEEprom);i++)
+            for(i=0;i<SetEELen;i++)
             {
-              if(i < (sizeof(SetEEprom) - 1))
+              if(i < (SetEELen - 1))
                 DBGMSG("0x%02x ", SetEEprom[i]);
               else
                 DBGMSG("0x%02x]\n", SetEEprom[i]);
             }
             BTModuleReset();
-            uart_write(fd, SetEEprom, sizeof(SetEEprom));
+            uart_write(fd, SetEEprom, SetEELen);
             memset(rxbuf, 0, strlen(rxbuf));
             recctmain = uart_read(fd, rxbuf);
             // rxbuf --> 0x04 0x0e 0x04 0x01 0x27 0xfc 0x00 (Success)
@@ -190,224 +193,6 @@ int main(int argc, char *argv[])
         exit(0);
       }
     }
-    else if(strcmp("operation", argv[1]) == 0)
-    {
-      // get Pattern mode
-      //eeprom_op = atoi(argv[2]);
-      ReadEEpromCommand(GetEEprom, 0x01B1, 1);
-      uart_write(fd, GetEEprom, sizeof(GetEEprom));
-      DBGMSG("Send read Operation Pattern value command [");
-      for(i=0;i<sizeof(GetEEprom);i++)
-      {
-        if(i < (sizeof(GetEEprom) - 1))
-          DBGMSG("0x%02x ", GetEEprom[i]);
-        else
-          DBGMSG("0x%02x]\n", GetEEprom[i]);
-      }
-      recctmain = uart_read(fd, rxbuf);
-      if(recctmain >= 11)
-      {
-        // rxbuf --> 0x04 0x0e 0x08 0x01 0x29 0xfc 0x00 0x01 0xB1 0x01 0x04
-        DBGMSG("Receive read Operation Pattern value command [");
-        for(i=0;i<recctmain;i++)
-          DBGMSG("0x%02x ", rxbuf[i]);
-        DBGMSG("]\n");
-        if(rxbuf[10] & 0x04)
-          DBGMSG("Operation Pattern is Manual Mode\n");
-        else
-          DBGMSG("Operation Pattern is Auto Mode\n");
-        // write setting value to eeprom
-        if(((rxbuf[10] & 0x04) >> 2) != (atoi(argv[2])))
-        {
-          if(atoi(argv[2]) == 0)
-            SetEEVal[0] = rxbuf[10] & 0xFB;
-            //MadeSOPComm(SetOPComm, (rxbuf[10] & 0xFB));
-          else
-            SetEEVal[0] = rxbuf[10] | 0x04;
-            //MadeSOPComm(SetOPComm, (rxbuf[10] | 0x04));
-          WriteEEpromCommand(SetEEprom, 0x01B1, 1, SetEEVal);
-          DBGMSG("Send Write eeprom value command [");
-          for(i=0;i<sizeof(SetEEprom);i++)
-          {
-            if(i < (sizeof(SetEEprom) - 1))
-              DBGMSG("0x%02x ", SetEEprom[i]);
-            else
-              DBGMSG("0x%02x]\n", SetEEprom[i]);
-          }
-          BTModuleReset();
-          uart_write(fd, SetEEprom, sizeof(SetEEprom));
-          memset(rxbuf, 0, strlen(rxbuf));
-          recctmain = uart_read(fd, rxbuf);
-          // rxbuf --> 0x04 0x0e 0x04 0x01 0x27 0xfc 0x00 (Success)
-          if(recctmain >= 7)
-          {
-            DBGMSG("Receive Operation Pattern value command [");
-            for(i=0;i<recctmain;i++)
-              DBGMSG("0x%02x ", rxbuf[i]);
-            DBGMSG("]\n");
-            if((rxbuf[0] == 0x04) && (rxbuf[3] == 0x01) && (rxbuf[4] == 0x27) && (rxbuf[6] == 0x00))
-            {
-              DBGMSG("set eeprom Operation Pattern val success~~!!!\n \
-                      =============================================\n \
-                      ====== Reseting Bluetooth Module ~~!!! ======\n \
-                      =============================================\n");
-              BTModuleReset();
-              DBGMSG("After Setting~~~~~\nSend Read Operation Pattern command [");
-              ReadEEpromCommand(GetEEprom, 0x01B1, 1);
-              for(i=0;i<sizeof(GetEEprom);i++)
-              {
-                if(i < (sizeof(GetEEprom) - 1))
-                  DBGMSG("0x%02x ", GetEEprom[i]);
-                else
-                  DBGMSG("0x%02x]\n", GetEEprom[i]);
-              }
-              uart_write(fd, GetEEprom, sizeof(GetEEprom));
-              recctmain = uart_read(fd, rxbuf);
-              //DBGMSG("After setting //read eeprom recive count %d\n", recctmain);
-              // rxbuf --> 0x04 0x0e 0x08 0x01 0x29 0xfc 0x00 0x00 0x31 0x01 0x00
-              if(recctmain >= 1)
-              {
-                DBGMSG("After Setting~~~~~\nReceive read Operation Pattern command [");
-                for(i=0;i<recctmain;i++)
-                  DBGMSG("0x%02x ", rxbuf[i]);
-                DBGMSG("]\n");
-                close(fd);
-                exit(0);
-              }
-            }
-            else
-            {
-              DBGMSG("Read operation pattern from eeprom, and receive data is not correct~!");
-              close(fd);
-              exit(0);
-            }
-          }
-          else
-          {
-            DBGMSG("After Setting Operation pattern command, there is not receive any data !!!!!!!!!!\n");
-            close(fd);
-            exit(0);
-          }
-        }
-        else
-        {
-          DBGMSG("The New Operation pattern Value is the same with EEProm Value !!!!!!!!!!\n");
-          close(fd);
-          exit(0);
-        }
-      }
-      else
-      {
-        DBGMSG("There is not receive any data~~~~~!!!!!");
-        close(fd);
-        exit(0);
-      }
-    }
-    else if(strcmp("pdly", argv[1]) == 0)
-    {
-      // get Pattern delay time
-      ReadEEpromCommand(GetEEprom, 0x038B, 1);
-      uart_write(fd, GetEEprom, sizeof(GetEEprom));
-      DBGMSG("Send read Operation Pattern Delay Time value command [");
-      for(i=0;i<sizeof(GetEEprom);i++)
-      {
-        if(i < (sizeof(GetEEprom) - 1))
-          DBGMSG("0x%02x ", GetEEprom[i]);
-        else
-          DBGMSG("0x%02x]\n", GetEEprom[i]);
-      }
-      recctmain = uart_read(fd, rxbuf);
-      if(recctmain >= 11)
-      {
-        // rxbuf --> 0x04 0x0e 0x08 0x01 0x29 0xfc 0x00 0x01 0xB1 0x01 0x04
-        DBGMSG("Receive read Operation Pattern Delay Time value command [");
-        for(i=0;i<recctmain;i++)
-          DBGMSG("0x%02x ", rxbuf[i]);
-        DBGMSG("]\n");
-        DBGMSG("Operation Pattern Delay Time is %02x\n", rxbuf[10]);
-        // write setting value to eeprom
-        if(rxbuf[10] != (atoi(argv[2])))
-        {
-          SetEEVal[0] = atoi(argv[2]);
-          WriteEEpromCommand(SetEEprom, 0x038B, 1, SetEEVal);
-          //MadeSOPTComm(SetOPTComm, (atoi(argv[2])));
-          DBGMSG("Send Write Opteration Pattern Delay Time value command [");
-          for(i=0;i<sizeof(SetEEprom);i++)
-          {
-            if(i < (sizeof(SetEEprom) - 1))
-              DBGMSG("0x%02x ", SetEEprom[i]);
-            else
-              DBGMSG("0x%02x]\n", SetEEprom[i]);
-          }
-          BTModuleReset();
-          uart_write(fd, SetEEprom, sizeof(SetEEprom));
-          memset(rxbuf, 0, strlen(rxbuf));
-          recctmain = uart_read(fd, rxbuf);
-          // rxbuf --> 0x04 0x0e 0x04 0x01 0x27 0xfc 0x00 (Success)
-          if(recctmain >= 7)
-          {
-            DBGMSG("Receive Write Operation Pattern Delay Time value command [");
-            for(i=0;i<recctmain;i++)
-              DBGMSG("0x%02x ", rxbuf[i]);
-            DBGMSG("]\n");
-            if((rxbuf[0] == 0x04) && (rxbuf[3] == 0x01) && (rxbuf[4] == 0x27) && (rxbuf[6] == 0x00))
-            {
-              DBGMSG("set eeprom Operation Pattern Delay Time val success~~!!!\n \
-                      ========================================================\n \
-                      ============ Reseting Bluetooth Module ~~!! ============\n \
-                      ========================================================\n");
-              BTModuleReset();
-              ReadEEpromCommand(GetEEprom, 0x038B, 1);
-              DBGMSG("After Setting~~~~~\nSend Read Operation Pattern Delay Time command [");
-              for(i=0;i<sizeof(GetEEprom);i++)
-              {
-                if(i < (sizeof(GetEEprom) - 1))
-                  DBGMSG("0x%02x ", GetEEprom[i]);
-                else
-                  DBGMSG("0x%02x]\n", GetEEprom[i]);
-              }
-              uart_write(fd, GetEEprom, sizeof(GetEEprom));
-              recctmain = uart_read(fd, rxbuf);
-              //DBGMSG("After setting //read eeprom recive count %d\n", recctmain);
-              // rxbuf --> 0x04 0x0e 0x08 0x01 0x29 0xfc 0x00 0x00 0x31 0x01 0x00
-              if(recctmain >= 1)
-              {
-                DBGMSG("After Setting~~~~~\nReceive read Operation Pattern Delay Time command [");
-                for(i=0;i<recctmain;i++)
-                  DBGMSG("0x%02x ", rxbuf[i]);
-                DBGMSG("]\n");
-                close(fd);
-                exit(0);
-              }
-            }
-            else
-            {
-              DBGMSG("Read operation pattern from eeprom, and receive data is not correct~!");
-              close(fd);
-              exit(0);
-            }
-          }
-          else
-          {
-            DBGMSG("After Setting Operation pattern command, there is not receive any data !!!!!!!!!!\n");
-            close(fd);
-            exit(0);
-          }
-        }
-        else
-        {
-          DBGMSG("The New Operation pattern Delay Time Value is the same with EEProm Value !!!!!!!!!!\n");
-          close(fd);
-          exit(0);
-        }
-      }
-      else
-      {
-        DBGMSG("There is not receive any data~~~~~!!!!!");
-        close(fd);
-        exit(0);
-      }
-    }
     else if(strcmp("eeprom", argv[1]) == 0)
     {
       if(atoi(argv[2]) <= 0x4FF)
@@ -438,6 +223,66 @@ int main(int argc, char *argv[])
           else
           {
             DBGMSG("%02x]\n", rxbuf[i]);
+          }
+        }
+      }
+      BTModuleReset();
+      close(fd);
+      exit(0);
+    }
+    else if(strcmp("WREE", argv[1]) == 0)
+    {
+      if(atoi(argv[2]) == 0x50)
+      {
+        SetEELen = WriteEEpromCommand(SetEEprom, 0x0050, 8, defeep);
+        //MadeSBRComm(SetBRComm, BRC);
+        DBGMSG("Send Write eeprom value command [");
+        for(i=0;i<SetEELen;i++)
+        {
+          if(i < (SetEELen - 1))
+            DBGMSG("0x%02x ", SetEEprom[i]);
+          else
+            DBGMSG("0x%02x]\n", SetEEprom[i]);
+        }
+        BTModuleReset();
+        uart_write(fd, GetEEprom, SetEELen);
+        memset(rxbuf, 0, strlen(rxbuf));
+        recctmain = uart_read(fd, rxbuf);
+        // rxbuf --> 0x04 0x0e 0x04 0x01 0x27 0xfc 0x00 (Success)
+        if(recctmain >= 7)
+        {
+          DBGMSG("Receive Write eeprom value command [");
+          for(i=0;i<recctmain;i++)
+            DBGMSG("0x%02x ", rxbuf[i]);
+          DBGMSG("]\n");
+          BTModuleReset();
+          ReadEEpromCommand(GetEEprom, atoi(argv[2]), 0x10);
+          uart_write(fd, GetEEprom, sizeof(GetEEprom));
+          DBGMSG("Send Geteeprom command : [");
+          for(i=0;i<sizeof(GetEEprom);i++)
+          {
+            if(i < (sizeof(GetEEprom) - 1))
+              DBGMSG("0x%02x ", GetEEprom[i]);
+            else
+              DBGMSG("0x%02x]\n", GetEEprom[i]);
+          }
+          recctmain = uart_read(fd, rxbuf);
+          if(recctmain >= 11)
+          {
+            DBGMSG("EEprom value is [");
+            for(i=10,j=0;i<recctmain;i++,j++)
+            {
+              if(i < (recctmain - 1))
+              {
+                if(j==8)
+                  DBGMSG("\t");
+                DBGMSG("%02x ", rxbuf[i]);
+              }
+              else
+              {
+                DBGMSG("%02x]\n", rxbuf[i]);
+              }
+            }
           }
         }
       }
