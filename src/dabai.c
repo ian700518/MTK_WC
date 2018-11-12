@@ -3,7 +3,6 @@
 
 const unsigned int BaudRateList[10] = {115200, 57600, 38400, 28800, 19200, 14400, 9600, 4800, 2400, 1000000};
 const unsigned char BRSValue[10] = {0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x11};
-const unsigned char defeep[8] = {0x00, 0x00, 0x00, 0x1B, 0x49, 0x10, 0x11, 0x33};
 
 int main(int argc, char *argv[])
 {
@@ -223,66 +222,6 @@ int main(int argc, char *argv[])
           else
           {
             DBGMSG("%02x]\n", rxbuf[i]);
-          }
-        }
-      }
-      BTModuleReset();
-      close(fd);
-      exit(0);
-    }
-    else if(strcmp("WREE", argv[1]) == 0)
-    {
-      if(atoi(argv[2]) == 0x50)
-      {
-        SetEELen = WriteEEpromCommand(SetEEprom, 0x0050, 8, defeep);
-        //MadeSBRComm(SetBRComm, BRC);
-        DBGMSG("Send Write eeprom value command [");
-        for(i=0;i<SetEELen;i++)
-        {
-          if(i < (SetEELen - 1))
-            DBGMSG("0x%02x ", SetEEprom[i]);
-          else
-            DBGMSG("0x%02x]\n", SetEEprom[i]);
-        }
-        BTModuleReset();
-        uart_write(fd, GetEEprom, SetEELen);
-        memset(rxbuf, 0, strlen(rxbuf));
-        recctmain = uart_read(fd, rxbuf);
-        // rxbuf --> 0x04 0x0e 0x04 0x01 0x27 0xfc 0x00 (Success)
-        if(recctmain >= 7)
-        {
-          DBGMSG("Receive Write eeprom value command [");
-          for(i=0;i<recctmain;i++)
-            DBGMSG("0x%02x ", rxbuf[i]);
-          DBGMSG("]\n");
-          BTModuleReset();
-          ReadEEpromCommand(GetEEprom, atoi(argv[2]), 0x10);
-          uart_write(fd, GetEEprom, sizeof(GetEEprom));
-          DBGMSG("Send Geteeprom command : [");
-          for(i=0;i<sizeof(GetEEprom);i++)
-          {
-            if(i < (sizeof(GetEEprom) - 1))
-              DBGMSG("0x%02x ", GetEEprom[i]);
-            else
-              DBGMSG("0x%02x]\n", GetEEprom[i]);
-          }
-          recctmain = uart_read(fd, rxbuf);
-          if(recctmain >= 11)
-          {
-            DBGMSG("EEprom value is [");
-            for(i=10,j=0;i<recctmain;i++,j++)
-            {
-              if(i < (recctmain - 1))
-              {
-                if(j==8)
-                  DBGMSG("\t");
-                DBGMSG("%02x ", rxbuf[i]);
-              }
-              else
-              {
-                DBGMSG("%02x]\n", rxbuf[i]);
-              }
-            }
           }
         }
       }
