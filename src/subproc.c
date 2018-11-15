@@ -129,9 +129,9 @@ int CheckCHGDevInfo(unsigned char *path, struct ClientDev *CDV, unsigned char *C
   // First check userID and Demolist's userID, if there are the same. it is a demo account.
   // if there is not the same, check it with server. if there are the same, it is a registed account.
   // otherwise it is a not faild account.
-  if(CheckDemoID("DaBai/RxCommTmp.txt", filebuf) == 0)
+  if(CheckDemoID("/DaBai/RxCommTmp.txt", filebuf) == 0)
   {
-    if(CheckServerID("DaBai/RxCommTmp.txt", filebuf) == 0)
+    if(CheckServerID("/DaBai/RxCommTmp.txt", filebuf) == 0)
       return -1;
   }
   DBGSUB("filebuf to jobj string %s\n", json_object_to_json_string(jobj));
@@ -327,6 +327,7 @@ int UpdateChgDevice(struct ClientDev *CDV, struct ClientDev *Tmp, unsigned char 
   for(i=0;i<CHGDEVMAX;i++)
   {
     time(&cur_time);
+    DBGSUB("At UpdateChgDevice cur_time is %d\nAt UpdateChgDevice (CDV+%d)->Currenttime is %d\n", cur_time, i, (CDV+i)->CurrentTime);
     if((cur_time > (CDV+i)->CurrentTime) && (cur_time - (CDV+i)->CurrentTime) < CHGUPDATEDLY)
     {
       (Tmp+j)->DevIdx = (CDV+i)->DevIdx;

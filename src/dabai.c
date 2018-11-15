@@ -355,20 +355,20 @@ int main(int argc, char *argv[])
     while(1)
     {
       time(&Current_sec);
-      switch(BTTransferUart(fd, "DaBai/RxCommTmp.txt", rxbuf, filebuf))
+      switch(BTTransferUart(fd, "/DaBai/RxCommTmp.txt", rxbuf, filebuf))
       {
         case 1:     // Set Device Network Information
           //BTIdx = 0;
           break;
 
         case 2:     // Devive Send Account and Devive information to check will be charged
-          CheckCHGDevInfo("DaBai/RxCommTmp.txt", ChargeDevice, &ChargeDeviceCount, filebuf);
+          CheckCHGDevInfo("/DaBai/RxCommTmp.txt", ChargeDevice, &ChargeDeviceCount, filebuf);
           //BTIdx = 0;
           break;
 
         case 3:     // Set Bluetooth Device Name
           close(fd);
-          ChangBTName("DaBai/RxCommTmp.txt", rxbuf, filebuf);
+          ChangBTName("/DaBai/RxCommTmp.txt", rxbuf, filebuf);
           //BTIdx = 0;
           fd = uart_initial(DEV_UART, BAUDRATE, DATABIT, PARITY, STOPBIT);
           if(fd < 0)
@@ -383,7 +383,7 @@ int main(int argc, char *argv[])
           break;
 
         default:
-          DBGMSG("Uart not receive any data\n");
+          //DBGMSG("Uart not receive any data\n");
           break;
       }
       // for test charge List

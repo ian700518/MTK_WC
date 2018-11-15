@@ -92,7 +92,7 @@
 #define CHGLISTPATH "/DaBai/OnlineChgList.json"
 #define DEMOLISTPATH "/DaBai/DemoList.json"
 #define CHKCHGLISTDLY 300
-#define CHGUPDATEDLY 60
+#define CHGUPDATEDLY 65
 
 #define DIRECT_OUT 1
 #define DIRECT_IN 0
