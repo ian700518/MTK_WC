@@ -386,46 +386,10 @@ int main(int argc, char *argv[])
           //DBGMSG("Uart not receive any data\n");
           break;
       }
-      // for test charge List
-      /*
-      #if 0
-        for(i=0;i<ChargeDeviceCount;i++)
-        {
-          time(&Current_sec);
-          if((Current_sec - Present_sec) < 20)
-          {
-            if((strcmp((ChargeDevice+i)->DevUserId, "Demo001") == 0) || (strcmp((ChargeDevice+i)->DevUserId, "Demo002") == 0) || (strcmp((ChargeDevice+i)->DevUserId, "Demo005") == 0))
-            {
-              DBGMSG("DevUserId is %s\n", (ChargeDevice+i)->DevUserId);
-              ChargeDevice[i].CurrentTime = Current_sec;
-            }
-          }
-          else if((Current_sec - Present_sec) >= 20 && (Current_sec - Present_sec) < 40)
-          {
-            if((strcmp((ChargeDevice+i)->DevUserId, "Demo002") == 0) || (strcmp((ChargeDevice+i)->DevUserId, "Demo005") == 0))
-            {
-              DBGMSG("DevUserId is %s\n", (ChargeDevice+i)->DevUserId);
-              ChargeDevice[i].CurrentTime = Current_sec;
-            }
-          }
-          else if((Current_sec - Present_sec) >= 40 && (Current_sec - Present_sec) < 60)
-          {
-            if((strcmp((ChargeDevice+i)->DevUserId, "Demo005") == 0))
-            {
-              DBGMSG("DevUserId is %s\n", (ChargeDevice+i)->DevUserId);
-              ChargeDevice[i].CurrentTime = Current_sec;
-            }
-          }
-        }
-      #endif
-      // for test charge List
-      */
       if((Current_sec - Present_sec) >= CHKCHGLISTDLY)
       {
         Present_sec = Current_sec;
         ChargeDeviceCount = UpdateChgDevice(ChargeDevice, CDVTemp, filebuf);
-        if(ChargeDeviceCount == 0)
-          SetGpioVal(GPIO_WCEN_NUM, 0);
         DBGMSG("ChargeDeviceCount is %d\n", ChargeDeviceCount);
       }
 
@@ -436,7 +400,12 @@ int main(int argc, char *argv[])
       */
       if(ChargeDeviceCount != 0 && (GetGpioVal(GPIO_WCEN_NUM) == 0))
       {
+        Present_sec = Current_sec;
         SetGpioVal(GPIO_WCEN_NUM, 1);
+      }
+      else if(ChargeDeviceCount == 0 && (GetGpioVal(GPIO_WCEN_NUM) == 1))
+      {
+        SetGpioVal(GPIO_WCEN_NUM, 0);
       }
       usleep(100000);
     }
