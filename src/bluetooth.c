@@ -456,10 +456,7 @@ int BTTransferUart(int fd, unsigned char *path, unsigned char *rxbuf, unsigned c
             {
                 uart_write(fd, imgbuf, fread(imgbuf, 1, FILESIZE, fpimg));
             }
-            if(strcmp(checkstr, "iOS") == 0)
-            {
-                uart_write(fd, IOSSUFFIX, strlen(IOSSUFFIX));
-            }
+            uart_write(fd, IOSSUFFIX, strlen(IOSSUFFIX));
             fclose(fpimg);
             free(imgbuf);
             json_object_put(jobj);      // if new json object, After used must be free json object
